@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🔮 塔罗占卜</title>
+<link rel="stylesheet" href="static/css/style.css">
+</head>
+<body>
+
+<div class="header">
+  <h1><span class="gradient-text">🔮 塔罗占卜</span></h1>
+  <p>静心凝神，提出你的问题，让塔罗为你指引方向</p>
+</div>
+
+<div class="container">
+
+  <!-- Settings -->
+  <div class="settings-toggle">
+    <button id="btnSettings" onclick="toggleSettings()">⚙️ AI 设置</button>
+  </div>
+  <div class="settings-panel" id="settingsPanel">
+    <h3>🤖 OpenAI 兼容 API</h3>
+    <div class="settings-row">
+      <label>BASE_URL</label>
+      <input id="apiBaseUrl" placeholder="https://api.openai.com/v1">
+    </div>
+    <div class="settings-row">
+      <label>API_KEY</label>
+      <input id="apiKey" type="password" placeholder="sk-...">
+    </div>
+    <div class="settings-row">
+      <label>模型</label>
+      <select id="apiModel"><option value="">-- 请先获取 --</option></select>
+      <button class="btn-small" id="btnFetchModels" onclick="fetchModels()">📡 获取模型列表</button>
+    </div>
+    <div class="settings-row">
+      <label>Max Tokens</label>
+      <input id="apiMaxTokens" type="number" value="4096" min="1" max="128000">
+    </div>
+    <div class="settings-row"><span class="hint">配置保存在浏览器本地。留空则不启用 AI。</span></div>
+    <button class="btn-save" onclick="saveApiConfig()">💾 保存配置</button>
+    <span id="apiStatus" style="margin-left:12px;font-size:0.85em;color:#8878b0;"></span>
+  </div>
+
+  <!-- Step 1: Question + Spread -->
+  <div class="card" id="step1">
+    <div class="step-title"><span class="step-num">1</span> 提问 & 选择牌型</div>
+    <textarea class="question-input" id="questionInput"
+      placeholder="请输入你想了解的问题，例如：我最近的事业发展方向是什么？我和TA的关系会如何发展？..."></textarea>
+    <p style="color:var(--text-dim);margin:12px 0 8px;font-size:0.9em;">选择一种牌型：</p>
+    <div class="spread-grid" id="spreadGrid"></div>
+    <div class="btn-row mt-16">
+      <button class="btn-primary" id="btnStartShuffle" onclick="goToStep2()" disabled>开始洗牌 🔀</button>
+    </div>
+  </div>
+
+  <!-- Step 2: Shuffle & Cut -->
+  <div class="card" id="step2" style="display:none;">
+    <div class="step-title"><span class="step-num">2</span> 洗牌 & 切牌</div>
+    <div class="shuffle-area" id="shuffleArea">
+      <div class="shuffle-deck" id="shuffleDeck" onclick="doShuffle()">
+        <img src="static/cards/card-back.svg" alt="牌背">
+      </div>
+      <p class="shuffle-counter" id="shuffleCount">点击牌堆洗牌 — 建议至少7次</p>
+    </div>
+    <div class="cut-area" id="cutArea" style="display:none;">
+      <p style="color:var(--text-dim);margin-bottom:10px;">拖动滑块选择切牌位置（每张牌的正逆位已在洗牌时确定）</p>
+      <input type="range" class="cut-slider" id="cutSlider" min="1" max="77" value="39" oninput="updateCutPreview()">
+      <p class="cut-info" id="cutInfo">切牌位置: 第 39 张</p>
+      <div class="btn-row mt-16">
+        <button class="btn-secondary" onclick="goBackToStep1()">⬅ 返回</button>
+        <button class="btn-primary" onclick="confirmCut()">确认切牌 ➤</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 3: Select Cards -->
+  <div class="card" id="step3" style="display:none;">
+    <div class="step-title"><span class="step-num">3</span> 凭直觉选择 <span id="selectCount">0/0</span> 张牌</div>
+    <div class="card-select-grid" id="cardSelectGrid"></div>
+    <div class="btn-row mt-16">
+      <button class="btn-secondary" onclick="showStep(2)">⬅ 返回</button>
+    </div>
+  </div>
+
+  <!-- Step 4: Reveal -->
+  <div class="card" id="step4" style="display:none;">
+    <div class="step-title"><span class="step-num">4</span> 牌面揭示</div>
+    <div class="reveal-area" id="revealArea"></div>
+    <div class="btn-row mt-16">
+      <button class="btn-primary" id="btnOverallReading" onclick="doOverallReading()" style="display:none;">🔮 AI 整体解读</button>
+    </div>
+    <div class="overall-reading" id="overallReading" style="display:none;"></div>
+    <div class="btn-row mt-16">
+      <button class="btn-secondary" onclick="resetAll()">🔄 重新开始</button>
+    </div>
+  </div>
+
+</div>
+
+<script src="static/js/config.js"></script>
+<script src="static/js/markdown.js"></script>
+<script src="static/js/api.js"></script>
+<script src="static/js/app.js"></script>
+</body>
+</html>

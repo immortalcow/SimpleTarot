@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 320" width="200" height="320">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1040"/>
+      <stop offset="50%" style="stop-color:#0d0628"/>
+      <stop offset="100%" style="stop-color:#1a1040"/>
+    </linearGradient>
+    <linearGradient id="borderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#c9a84c"/>
+      <stop offset="50%" style="stop-color:#f4d980"/>
+      <stop offset="100%" style="stop-color:#c9a84c"/>
+    </linearGradient>
+    <linearGradient id="innerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2a1f5c"/>
+      <stop offset="50%" style="stop-color:#1a1240"/>
+      <stop offset="100%" style="stop-color:#2a1f5c"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Outer card -->
+  <rect x="2" y="2" width="196" height="316" rx="12" ry="12" fill="#0a0518" stroke="url(#borderGrad)" stroke-width="3"/>
+
+  <!-- Inner border -->
+  <rect x="12" y="12" width="176" height="296" rx="8" ry="8" fill="url(#bgGrad)" stroke="url(#borderGrad)" stroke-width="1.5"/>
+
+  <!-- Corner ornaments -->
+  <g fill="url(#borderGrad)" opacity="0.6">
+    <!-- Top-left -->
+    <circle cx="28" cy="28" r="3"/>
+    <circle cx="28" cy="40" r="2"/>
+    <circle cx="40" cy="28" r="2"/>
+    <!-- Top-right -->
+    <circle cx="172" cy="28" r="3"/>
+    <circle cx="172" cy="40" r="2"/>
+    <circle cx="160" cy="28" r="2"/>
+    <!-- Bottom-left -->
+    <circle cx="28" cy="292" r="3"/>
+    <circle cx="28" cy="280" r="2"/>
+    <circle cx="40" cy="292" r="2"/>
+    <!-- Bottom-right -->
+    <circle cx="172" cy="292" r="3"/>
+    <circle cx="172" cy="280" r="2"/>
+    <circle cx="160" cy="292" r="2"/>
+  </g>
+
+  <!-- Central decorative diamond -->
+  <rect x="70" y="110" width="60" height="100" rx="4" ry="4" transform="rotate(45, 100, 160)" fill="none" stroke="url(#borderGrad)" stroke-width="1" opacity="0.5"/>
+  <rect x="82" y="122" width="36" height="76" rx="3" ry="3" transform="rotate(45, 100, 160)" fill="none" stroke="url(#borderGrad)" stroke-width="0.8" opacity="0.3"/>
+
+  <!-- Central question mark -->
+  <text x="100" y="175" text-anchor="middle" dominant-baseline="central"
+        font-family="serif" font-size="72" font-weight="bold"
+        fill="url(#borderGrad)" opacity="0.9">?</text>
+
+  <!-- Decorative stars -->
+  <g fill="url(#borderGrad)" opacity="0.4">
+    <!-- Top star -->
+    <polygon points="100,65 103,72 110,72 104,77 106,84 100,79 94,84 96,77 90,72 97,72"/>
+    <!-- Bottom star -->
+    <polygon points="100,245 103,252 110,252 104,257 106,264 100,259 94,264 96,257 90,252 97,252"/>
+  </g>
+
+  <!-- Side decorative lines -->
+  <g stroke="url(#borderGrad)" stroke-width="0.5" opacity="0.3">
+    <line x1="25" y1="80" x2="25" y2="240"/>
+    <line x1="175" y1="80" x2="175" y2="240"/>
+  </g>
+</svg>
