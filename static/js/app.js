@@ -31,11 +31,8 @@ let shuffleCount = 0;
   renderSettingsFields();
   updateApiUI();
   
-  // 绑定导入按钮事件
   const btnImport = document.getElementById('btnImport');
-  if (btnImport) {
-    btnImport.addEventListener('click', importFromBase64);
-  }
+  if (btnImport) btnImport.addEventListener('click', importFromBase64);
 
   showStep(1);
 })();
@@ -45,16 +42,10 @@ function renderSettingsFields() {
   document.getElementById('apiBaseUrl').value = state.apiBaseUrl;
   document.getElementById('apiKey').value = state.apiKey;
   document.getElementById('apiMaxTokens').value = state.apiMaxTokens;
-  updateModelSelect();
-}
-function updateModelSelect() {
   const sel = document.getElementById('apiModel');
-  sel.innerHTML = '';
-  if (state.apiModel) {
-    sel.innerHTML = `<option value="${escHtml(state.apiModel)}">${escHtml(state.apiModel)}</option>`;
-  } else {
-    sel.innerHTML = '<option value="">-- 请先获取 --</option>';
-  }
+  sel.innerHTML = state.apiModel 
+    ? `<option value="${escHtml(state.apiModel)}">${escHtml(state.apiModel)}</option>`
+    : '<option value="">-- 请先获取 --</option>';
 }
 function toggleSettings() {
   document.getElementById('settingsPanel').classList.toggle('show');
@@ -109,7 +100,6 @@ function showStep(n) {
   }
 }
 function goBackToStep1() {
-  state.deck = [];
   state.shuffled = false;
   state.selectedCards = [];
   shuffleCount = 0;
@@ -184,8 +174,7 @@ function updateCutPreview() {
 function confirmCut() {
   const pos = parseInt(document.getElementById('cutSlider').value);
   state.cutPos = pos;
-  const top = state.deck.splice(0, pos);
-  state.deck.push(...top);
+  state.deck.push(...state.deck.splice(0, pos));
   showToast('✅ 切牌完成');
   goToStep3();
 }
@@ -332,17 +321,10 @@ function exportToBase64() {
   const data = {
     q: state.question,
     s: state.spread ? state.spread.name : '',
-    c: state.revealed.map(r => ({
-      id: r.id,
-      rev: r.reversed ? 1 : 0,
-      p: r.position
-    }))
+    c: state.revealed.map(r => ({ id: r.id, rev: r.reversed ? 1 : 0, p: r.position }))
   };
-  const json = JSON.stringify(data);
-  const bytes = new TextEncoder().encode(json);
-  let binary = '';
-  for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
-  const b64 = btoa(binary);
+  const bytes = new TextEncoder().encode(JSON.stringify(data));
+  const b64 = btoa(String.fromCharCode(...bytes));
   copyToClipboard(b64);
   showToast('✅ 记录已转换为 Base64 并复制到剪贴板');
 }
@@ -358,32 +340,19 @@ function closeImportModal() {
 }
 
 function processImport() {
-  const b64 = document.getElementById('importInput').value;
-  if (!b64 || !b64.trim()) {
-    closeImportModal();
-    return;
-  }
+  const b64 = document.getElementById('importInput').value.trim().replace(/\s/g, '');
+  if (!b64) { closeImportModal(); return; }
   try {
-    // 处理可能的空白字符
-    const cleanB64 = b64.trim().replace(/\s/g, '');
-    const binary = atob(cleanB64);
+    const binary = atob(b64);
     const bytes = new Uint8Array(binary.length);
     for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-    const json = new TextDecoder().decode(bytes);
-    const data = JSON.parse(json);
+    const data = JSON.parse(new TextDecoder().decode(bytes));
     
-    // 基本校验
-    if (!data.q || !data.c) throw new Error('数据不完整');
+    if (!data.q || !data.c) throw new Error();
 
     state.question = data.q;
     state.spread = SPREADS.find(s => s.name === data.s) || SPREADS[0];
-    state.revealed = data.c.map(item => ({
-      id: item.id,
-      reversed: !!item.rev,
-      position: item.p
-    }));
-    state.overallAI = '';
-    state.overallReasoning = '';
+    state.revealed = data.c.map(item => ({ id: item.id, reversed: !!item.rev, position: item.p }));
     
     document.getElementById('questionInput').value = state.question;
     renderReveal();
@@ -391,7 +360,6 @@ function processImport() {
     closeImportModal();
     showToast('✅ 记录导入成功');
   } catch(e) {
-    console.error('Import Error:', e);
     alert('无效的记录格式或 Base64 已损坏');
   }
 }
