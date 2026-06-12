@@ -43,11 +43,27 @@
     <span id="apiStatus" style="margin-left:12px;font-size:0.85em;color:#8878b0;"></span>
   </div>
 
+  <!-- Import Modal -->
+  <div id="importModal" class="modal-overlay" style="display:none;">
+    <div class="modal-content">
+      <h3>📥 导入记录</h3>
+      <p style="font-size: 0.85em; color: var(--text-dim); margin-bottom: 12px;">请粘贴导出的 Base64 字符串：</p>
+      <textarea id="importInput" class="question-input" style="min-height: 120px; margin-bottom: 16px; font-size: 0.85em;"></textarea>
+      <div class="btn-row">
+        <button class="btn-secondary" onclick="closeImportModal()">取消</button>
+        <button class="btn-primary" onclick="processImport()">确认导入</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Step 1: Question + Spread -->
   <div class="card" id="step1">
     <div class="step-title"><span class="step-num">1</span> 提问 & 选择牌型</div>
-    <textarea class="question-input" id="questionInput"
-      placeholder="请输入你想了解的问题，例如：我最近的事业发展方向是什么？我和TA的关系会如何发展？..."></textarea>
+    <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+      <textarea class="question-input" id="questionInput" style="flex: 1;"
+        placeholder="请输入你想了解的问题，例如：我最近的事业发展方向是什么？我和TA的关系会如何发展？..."></textarea>
+      <button class="btn-small" id="btnImport" style="height: fit-content;">📥 导入记录</button>
+    </div>
     <p style="color:var(--text-dim);margin:12px 0 8px;font-size:0.9em;">选择一种牌型：</p>
     <div class="spread-grid" id="spreadGrid"></div>
     <div class="btn-row mt-16">
@@ -89,10 +105,11 @@
     <div class="step-title"><span class="step-num">4</span> 牌面揭示</div>
     <div class="reveal-area" id="revealArea"></div>
     <div class="btn-row mt-16">
-      <button class="btn-primary" id="btnOverallReading" onclick="doOverallReading()" style="display:none;">🔮 AI 整体解读</button>
+      <button class="btn-primary" id="btnOverallReading" onclick="doOverallReading()" style="display:none;">🔮 AI 解读</button>
     </div>
     <div class="overall-reading" id="overallReading" style="display:none;"></div>
     <div class="btn-row mt-16">
+      <button class="btn-secondary" onclick="exportToBase64()">📤 导出记录</button>
       <button class="btn-secondary" onclick="resetAll()">🔄 重新开始</button>
     </div>
   </div>

@@ -30,6 +30,13 @@ let shuffleCount = 0;
   } catch(e) {}
   renderSettingsFields();
   updateApiUI();
+  
+  // 绑定导入按钮事件
+  const btnImport = document.getElementById('btnImport');
+  if (btnImport) {
+    btnImport.addEventListener('click', importFromBase64);
+  }
+
   showStep(1);
 })();
 
@@ -192,13 +199,19 @@ function goToStep3() {
 }
 function renderCardSelection() {
   const grid = document.getElementById('cardSelectGrid');
-  const count = 78; // 总共 78 张塔罗牌
+  const rows = 6;
+  const cardsPerRow = 13;
   let html = '';
-  for (let i = 0; i < count; i++) {
-    const chosen = state.selectedCards.includes(i);
-    html += `<div class="card-slot${chosen ? ' chosen' : ''}" id="slot${i}" onclick="pickCard(${i})">
-      <img src="static/cards/card-back.svg" alt="牌${i+1}">
-    </div>`;
+  for (let r = 0; r < rows; r++) {
+    html += '<div class="card-row">';
+    for (let c = 0; c < cardsPerRow; c++) {
+      const i = r * cardsPerRow + c;
+      const chosen = state.selectedCards.includes(i);
+      html += `<div class="card-slot${chosen ? ' chosen' : ''}" id="slot${i}" onclick="pickCard(${i})">
+        <img src="static/cards/card-back.svg" alt="牌${i+1}">
+      </div>`;
+    }
+    html += '</div>';
   }
   grid.innerHTML = html;
   document.getElementById('selectCount').textContent = `${state.selectedCards.length}/${state.spread.positions.length}`;
@@ -218,26 +231,26 @@ function goToStep4() {
   showStep(4);
   const picks = state.selectedCards.map(idx => state.deck[idx]);
   state.revealed = picks.map((card, i) => ({
-    card,
-    position: state.spread.positions[i] || `位置${i + 1}`,
-    aiText: ''
+    id: card.id,
+    reversed: card.reversed,
+    position: state.spread.positions[i] || `位置${i + 1}`
   }));
   renderReveal();
 }
 function renderReveal() {
   const area = document.getElementById('revealArea');
   area.innerHTML = state.revealed.map((r, i) => {
-    const meaning = CARD_MEANINGS[r.card.id];
+    const meaning = CARD_MEANINGS[r.id];
     if (!meaning) return '';
-    const name = meaning.cn || r.card.id;
+    const name = meaning.cn || r.id;
     const en = meaning.en || '';
-    const text = r.card.reversed ? meaning.reversed : meaning.upright;
-    const orientClass = r.card.reversed ? 'reversed' : 'upright';
-    const orientLabel = r.card.reversed ? '逆位' : '正位';
+    const text = r.reversed ? meaning.reversed : meaning.upright;
+    const orientClass = r.reversed ? 'reversed' : 'upright';
+    const orientLabel = r.reversed ? '逆位' : '正位';
     return `
     <div class="reveal-card" id="reveal${i}">
-      <img src="static/cards/${r.card.id}.jpg" alt="${name}"
-           class="${r.card.reversed ? 'reversed-img' : ''}"
+      <img src="static/cards/${r.id}.jpg" alt="${name}"
+           class="${r.reversed ? 'reversed-img' : ''}"
            onerror="this.onerror=null;this.src='static/cards/card-back.svg';">
       <div class="card-info">
         <div class="card-name">${name} <span style="font-size:0.8em;color:var(--text-dim)">${en}</span>
@@ -245,10 +258,6 @@ function renderReveal() {
         </div>
         <div class="card-position">📍 ${r.position}</div>
         <div class="card-meaning">${text}</div>
-        ${state.aiEnabled ? `<button class="btn-small mt-8" onclick="doCardAI(${i})">🤖 AI 解析</button>` : ''}
-        <div class="ai-interp" id="aiInterp${i}" style="display:none;">
-          <div id="aiText${i}"></div>
-        </div>
       </div>
     </div>`;
   }).join('');
@@ -257,67 +266,141 @@ function renderReveal() {
 }
 
 // ---- AI Integration ----
-async function doCardAI(i) {
-  const el = document.getElementById('aiInterp' + i);
-  const txt = document.getElementById('aiText' + i);
-  el.style.display = 'block';
-  txt.innerHTML = '<span class="loading"></span> 解析中...';
-  try {
-    const r = state.revealed[i];
-    const meaning = CARD_MEANINGS[r.card.id];
-    const orient = r.card.reversed ? '逆位' : '正位';
-    const interpret = r.card.reversed ? meaning.reversed : meaning.upright;
-    const prompt = TAROT_PROMPTS.SINGLE_CARD(state.question, r.position, orient, meaning.cn, meaning.en, interpret);
-    const result = await TarotAPI.chat(
-      state.apiBaseUrl, state.apiKey, state.apiModel,
-      TAROT_PROMPTS.SYSTEM_ROLE,
-      prompt, state.apiMaxTokens
-    );
-    txt.innerHTML = MarkdownParser.parse(result);
-    state.revealed[i].aiText = result;
-  } catch(e) {
-    txt.textContent = '❌ ' + e.message;
-  }
+function toggleReasoning(el) {
+  el.closest('.reasoning-block').classList.toggle('open');
 }
 
 async function doOverallReading() {
   if (!state.aiEnabled) { showToast('请先在设置中配置 AI'); return; }
   const area = document.getElementById('overallReading');
   area.style.display = 'block';
-  area.innerHTML = '<h3>🔮 整体解读</h3><div class="content"><span class="loading"></span> 综合解析中...</div>';
+  area.innerHTML = `<h3>🔮 AI 解读</h3>
+    <div class="reasoning-block" id="reasoningBlock" style="display:none;">
+      <div class="reasoning-header" onclick="toggleReasoning(this)">
+        <span>🤔 思考过程</span>
+        <span class="toggle-icon">▼</span>
+      </div>
+      <div class="reasoning-content" id="reasoningContent"></div>
+    </div>
+    <div class="content" id="readingContent"><span class="loading"></span> 连结中...</div>`;
+  
+  const readingContent = document.getElementById('readingContent');
+  const reasoningBlock = document.getElementById('reasoningBlock');
+  const reasoningContent = document.getElementById('reasoningContent');
+  
+  let fullContent = '';
+  let fullReasoning = '';
+
   try {
     let cardsInfo = state.revealed.map((r, i) => {
-      const m = CARD_MEANINGS[r.card.id];
-      const orient = r.card.reversed ? '逆位' : '正位';
+      const m = CARD_MEANINGS[r.id];
+      const orient = r.reversed ? '逆位' : '正位';
       return `[${r.position}] ${m.cn}（${m.en}）- ${orient}`;
     }).join('\n');
+    
     const prompt = TAROT_PROMPTS.OVERALL_READING(state.question, state.spread.name, state.spread.positions.length, cardsInfo);
-    const result = await TarotAPI.chat(
+    
+    await TarotAPI.streamChat(
       state.apiBaseUrl, state.apiKey, state.apiModel,
       TAROT_PROMPTS.SYSTEM_ROLE,
-      prompt, state.apiMaxTokens
+      prompt, state.apiMaxTokens,
+      (chunk) => {
+        if (chunk.reasoning) {
+          if (fullReasoning === '') reasoningBlock.style.display = 'block';
+          fullReasoning += chunk.reasoning;
+          reasoningContent.textContent = fullReasoning;
+        }
+        if (chunk.content) {
+          if (fullContent === '') readingContent.innerHTML = '';
+          fullContent += chunk.content;
+          readingContent.innerHTML = MarkdownParser.parse(fullContent);
+        }
+      }
     );
-    area.innerHTML = `<h3>🔮 整体解读</h3><div class="content">${MarkdownParser.parse(result)}</div>`;
+    state.overallAI = fullContent;
+    state.overallReasoning = fullReasoning;
   } catch(e) {
-    area.innerHTML = `<h3>🔮 整体解读</h3><div class="content" style="color:#f88;">❌ ${e.message}</div>`;
+    readingContent.innerHTML = `<div class="error-panel">
+      <div class="error-header">❌ 调用 API 出错</div>
+      <div style="margin: 8px 0; max-height: 200px; overflow-y: auto;">${escHtml(e.message)}</div>
+      <button class="btn-copy-error" onclick="copyToClipboard(this.previousElementSibling.textContent)">复制完整错误信息</button>
+    </div>`;
+  }
+}
+
+function exportToBase64() {
+  const data = {
+    q: state.question,
+    s: state.spread ? state.spread.name : '',
+    c: state.revealed.map(r => ({
+      id: r.id,
+      rev: r.reversed ? 1 : 0,
+      p: r.position
+    }))
+  };
+  const json = JSON.stringify(data);
+  const bytes = new TextEncoder().encode(json);
+  let binary = '';
+  for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+  const b64 = btoa(binary);
+  copyToClipboard(b64);
+  showToast('✅ 记录已转换为 Base64 并复制到剪贴板');
+}
+
+function importFromBase64() {
+  document.getElementById('importModal').style.display = 'flex';
+  document.getElementById('importInput').value = '';
+  document.getElementById('importInput').focus();
+}
+
+function closeImportModal() {
+  document.getElementById('importModal').style.display = 'none';
+}
+
+function processImport() {
+  const b64 = document.getElementById('importInput').value;
+  if (!b64 || !b64.trim()) {
+    closeImportModal();
+    return;
+  }
+  try {
+    // 处理可能的空白字符
+    const cleanB64 = b64.trim().replace(/\s/g, '');
+    const binary = atob(cleanB64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    const json = new TextDecoder().decode(bytes);
+    const data = JSON.parse(json);
+    
+    // 基本校验
+    if (!data.q || !data.c) throw new Error('数据不完整');
+
+    state.question = data.q;
+    state.spread = SPREADS.find(s => s.name === data.s) || SPREADS[0];
+    state.revealed = data.c.map(item => ({
+      id: item.id,
+      reversed: !!item.rev,
+      position: item.p
+    }));
+    state.overallAI = '';
+    state.overallReasoning = '';
+    
+    document.getElementById('questionInput').value = state.question;
+    renderReveal();
+    showStep(4);
+    closeImportModal();
+    showToast('✅ 记录导入成功');
+  } catch(e) {
+    console.error('Import Error:', e);
+    alert('无效的记录格式或 Base64 已损坏');
   }
 }
 
 // ---- Reset ----
 function resetAll() {
-  state.question = '';
-  state.spread = null;
-  state.deck = [];
-  state.shuffled = false;
-  state.cutPos = 0;
-  state.selectedCards = [];
-  state.revealed = [];
-  shuffleCount = 0;
-  document.getElementById('questionInput').value = '';
-  document.querySelectorAll('.spread-option').forEach(el => el.classList.remove('selected'));
-  document.getElementById('overallReading').style.display = 'none';
-  showStep(1);
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (confirm('确定要重新开始吗？当前记录将丢失。')) {
+    location.reload();
+  }
 }
 
 // ---- Utils ----
@@ -330,4 +413,12 @@ function showToast(msg) {
 }
 function escHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function copyToClipboard(text) {
+  const el = document.createElement('textarea');
+  el.value = text;
+  document.body.appendChild(el);
+  el.select();
+  document.execCommand('copy');
+  document.body.removeChild(el);
 }
