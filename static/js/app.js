@@ -58,16 +58,16 @@ function saveToHistory() {
 function renderHistory() {
   const container = document.getElementById('historyList');
   if (state.history.length === 0) {
-    container.innerHTML = '<p style="text-align:center;color:var(--text-dimmer);margin-top:20px;">暂无历史记录</p>';
+    container.innerHTML = '<p style="text-align:center;color:var(--text-dimmer);margin-top:20px;font-size:0.9em;">暂无历史记录</p>';
     return;
   }
   
   container.innerHTML = state.history.map(h => `
     <div class="history-item" onclick="loadHistory(${h.id})">
-      <span class="history-item-del" onclick="deleteHistory(event, ${h.id})">🗑️</span>
       <div class="history-date">${h.date}</div>
       <div class="history-question">${escHtml(h.question)}</div>
       <div class="history-spread">${escHtml(h.spreadName)}</div>
+      <span class="history-item-del" onclick="deleteHistory(event, ${h.id})" title="删除记录">🗑️</span>
     </div>
   `).join('');
 }
