@@ -240,9 +240,6 @@ function showStep(n) {
     const el = document.getElementById('step' + i);
     if (el) el.style.display = (i === n) ? '' : 'none';
   }
-  if (n === 4) {
-    saveToHistory();
-  }
 }
 function goBackToStep1() {
   state.shuffled = false;
@@ -397,6 +394,9 @@ function renderReveal() {
   }).join('');
   document.getElementById('btnOverallReading').style.display = state.aiEnabled ? 'inline-block' : 'none';
   document.getElementById('overallReading').style.display = 'none';
+  
+  // 渲染完成后立即保存初始记录
+  saveToHistory();
 }
 
 // ---- AI Integration ----
@@ -465,9 +465,7 @@ async function doOverallReading() {
 
 // ---- Reset ----
 function resetAll() {
-  if (confirm('确定要重新开始吗？当前记录将丢失。')) {
-    location.reload();
-  }
+  location.reload();
 }
 
 // ---- Utils ----
