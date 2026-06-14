@@ -14,9 +14,114 @@ const state = {
   apiKey: '',
   apiModel: '',
   apiMaxTokens: 4096,
+  history: [],        // loaded from localStorage
 };
 
 // ---- Utils ----
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebarOverlay').classList.toggle('show');
+}
+
+function saveToHistory() {
+  if (state.revealed.length === 0) return;
+  const entry = {
+    id: Date.now(),
+    date: new Date().toLocaleString(),
+    question: state.question,
+    spreadName: state.spread ? state.spread.name : '',
+    revealed: state.revealed.map(r => ({
+      id: r.id,
+      reversed: r.reversed,
+      position: r.position
+    })),
+    overallAI: state.overallAI || '',
+    overallReasoning: state.overallReasoning || ''
+  };
+  
+  // 避免同一占卜多次保存（例如重复点击AI解读后）
+  const existingIndex = state.history.findIndex(h => 
+    h.question === entry.question && 
+    JSON.stringify(h.revealed) === JSON.stringify(entry.revealed)
+  );
+  
+  if (existingIndex !== -1) {
+    state.history[existingIndex] = entry;
+  } else {
+    state.history.unshift(entry);
+  }
+  
+  localStorage.setItem('tarot_history', JSON.stringify(state.history));
+  renderHistory();
+}
+
+function renderHistory() {
+  const container = document.getElementById('historyList');
+  if (state.history.length === 0) {
+    container.innerHTML = '<p style="text-align:center;color:var(--text-dimmer);margin-top:20px;">暂无历史记录</p>';
+    return;
+  }
+  
+  container.innerHTML = state.history.map(h => `
+    <div class="history-item" onclick="loadHistory(${h.id})">
+      <span class="history-item-del" onclick="deleteHistory(event, ${h.id})">🗑️</span>
+      <div class="history-date">${h.date}</div>
+      <div class="history-question">${escHtml(h.question)}</div>
+      <div class="history-spread">${escHtml(h.spreadName)}</div>
+    </div>
+  `).join('');
+}
+
+function loadHistory(id) {
+  const h = state.history.find(item => item.id === id);
+  if (!h) return;
+  
+  state.question = h.question;
+  state.spread = SPREADS.find(s => s.name === h.spreadName) || SPREADS[0];
+  state.revealed = h.revealed;
+  state.overallAI = h.overallAI;
+  state.overallReasoning = h.overallReasoning;
+  
+  document.getElementById('questionInput').value = state.question;
+  renderReveal();
+  showStep(4);
+  
+  if (state.overallAI) {
+    const overall = document.getElementById('overallReading');
+    overall.style.display = 'block';
+    
+    let reasoningHtml = '';
+    if (state.overallReasoning) {
+      reasoningHtml = `
+        <div class="reasoning-block" id="reasoningBlock">
+          <div class="reasoning-header" onclick="this.parentElement.classList.toggle('open')">
+            <span>🤔 思考过程</span>
+            <span>▼</span>
+          </div>
+          <div class="reasoning-content" id="reasoningContent">${escHtml(state.overallReasoning)}</div>
+        </div>`;
+    }
+    
+    overall.innerHTML = `
+      <h3>🔮 综合解读</h3>
+      ${reasoningHtml}
+      <div class="content" id="readingContent">${MarkdownParser.parse(state.overallAI)}</div>
+    `;
+  } else {
+    document.getElementById('overallReading').style.display = 'none';
+  }
+  
+  toggleSidebar();
+}
+
+function deleteHistory(event, id) {
+  event.stopPropagation();
+  if (!confirm('确定要删除这条记录吗？')) return;
+  state.history = state.history.filter(h => h.id !== id);
+  localStorage.setItem('tarot_history', JSON.stringify(state.history));
+  renderHistory();
+}
+
 function setCookie(name, value, days = 30) {
   const d = new Date();
   d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
@@ -57,13 +162,13 @@ let shuffleCount = 0;
     state.apiModel = cfg.model || '';
     state.apiMaxTokens = cfg.maxTokens || 4096;
     state.aiEnabled = !!(state.apiKey && state.apiBaseUrl);
+
+    state.history = JSON.parse(localStorage.getItem('tarot_history') || '[]');
   } catch(e) {}
   renderSettingsFields();
   updateApiUI();
+  renderHistory();
   
-  const btnImport = document.getElementById('btnImport');
-  if (btnImport) btnImport.addEventListener('click', importFromBase64);
-
   showStep(1);
 })();
 
@@ -134,6 +239,9 @@ function showStep(n) {
   for (let i = 1; i <= 4; i++) {
     const el = document.getElementById('step' + i);
     if (el) el.style.display = (i === n) ? '' : 'none';
+  }
+  if (n === 4) {
+    saveToHistory();
   }
 }
 function goBackToStep1() {
@@ -345,59 +453,13 @@ async function doOverallReading() {
     );
     state.overallAI = fullContent;
     state.overallReasoning = fullReasoning;
+    saveToHistory(); // AI 解读完成后再自动保存一次以包含解读内容
   } catch(e) {
     readingContent.innerHTML = `<div class="error-panel">
       <div class="error-header">❌ 调用 API 出错</div>
       <div style="margin: 8px 0; max-height: 200px; overflow-y: auto;">${escHtml(e.message)}</div>
       <button class="btn-copy-error" onclick="copyToClipboard(this.previousElementSibling.textContent)">复制完整错误信息</button>
     </div>`;
-  }
-}
-
-function exportToBase64() {
-  const data = {
-    q: state.question,
-    s: state.spread ? state.spread.name : '',
-    c: state.revealed.map(r => ({ id: r.id, rev: r.reversed ? 1 : 0, p: r.position }))
-  };
-  const bytes = new TextEncoder().encode(JSON.stringify(data));
-  const b64 = btoa(String.fromCharCode(...bytes));
-  copyToClipboard(b64);
-  showToast('✅ 记录已转换为 Base64 并复制到剪贴板');
-}
-
-function importFromBase64() {
-  document.getElementById('importModal').style.display = 'flex';
-  document.getElementById('importInput').value = '';
-  document.getElementById('importInput').focus();
-}
-
-function closeImportModal() {
-  document.getElementById('importModal').style.display = 'none';
-}
-
-function processImport() {
-  const b64 = document.getElementById('importInput').value.trim().replace(/\s/g, '');
-  if (!b64) { closeImportModal(); return; }
-  try {
-    const binary = atob(b64);
-    const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-    const data = JSON.parse(new TextDecoder().decode(bytes));
-    
-    if (!data.q || !data.c) throw new Error();
-
-    state.question = data.q;
-    state.spread = SPREADS.find(s => s.name === data.s) || SPREADS[0];
-    state.revealed = data.c.map(item => ({ id: item.id, reversed: !!item.rev, position: item.p }));
-    
-    document.getElementById('questionInput').value = state.question;
-    renderReveal();
-    showStep(4);
-    closeImportModal();
-    showToast('✅ 记录导入成功');
-  } catch(e) {
-    alert('无效的记录格式或 Base64 已损坏');
   }
 }
 
