@@ -16,12 +16,42 @@ const state = {
   apiMaxTokens: 4096,
 };
 
+// ---- Utils ----
+function setCookie(name, value, days = 30) {
+  const d = new Date();
+  d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+  const expires = "expires=" + d.toUTCString();
+  document.cookie = name + "=" + encodeURIComponent(value) + ";" + expires + ";path=/;SameSite=Lax";
+}
+
+function getCookie(name) {
+  const nameEQ = name + "=";
+  const ca = document.cookie.split(';');
+  for (let i = 0; i < ca.length; i++) {
+    let c = ca[i];
+    while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+    if (c.indexOf(nameEQ) === 0) return decodeURIComponent(c.substring(nameEQ.length, c.length));
+  }
+  return null;
+}
+
 let shuffleCount = 0;
 
 // ---- Init ----
 (function init() {
   try {
-    const cfg = JSON.parse(localStorage.getItem('tarot_api_config') || '{}');
+    // 优先从 Cookie 读取，降级从 localStorage 读取
+    let cfgStr = getCookie('tarot_api_config');
+    if (!cfgStr) {
+      cfgStr = localStorage.getItem('tarot_api_config');
+    }
+    
+    if (cfgStr) {
+      // 自动迁移或刷新 Cookie 有效期（延长 30 天）
+      setCookie('tarot_api_config', cfgStr, 30);
+    }
+    
+    const cfg = JSON.parse(cfgStr || '{}');
     state.apiBaseUrl = cfg.baseUrl || '';
     state.apiKey = cfg.apiKey || '';
     state.apiModel = cfg.model || '';
@@ -57,12 +87,19 @@ function saveApiConfig() {
   state.apiModel = document.getElementById('apiModel').value || '';
   state.apiMaxTokens = parseInt(document.getElementById('apiMaxTokens').value) || 4096;
   state.aiEnabled = !!(state.apiKey && state.apiBaseUrl);
-  localStorage.setItem('tarot_api_config', JSON.stringify({
+
+  const config = {
     baseUrl: state.apiBaseUrl,
     apiKey: state.apiKey,
     model: state.apiModel,
     maxTokens: state.apiMaxTokens
-  }));
+  };
+
+  // 保存到 Cookie (30天有效期)
+  setCookie('tarot_api_config', JSON.stringify(config), 30);
+  // 同时同步到 localStorage 作为备份
+  localStorage.setItem('tarot_api_config', JSON.stringify(config));
+
   updateApiUI();
   showToast(state.aiEnabled ? '✅ AI 已启用' : '💾 已保存（AI 未启用）');
 }
