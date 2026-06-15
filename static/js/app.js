@@ -26,9 +26,19 @@ function toggleSidebar() {
 
 function saveToHistory() {
   if (state.revealed.length === 0) return;
+
+  // 这里的比对逻辑排除 flipped 状态，只看问题和抽中的牌组（ID、位置、正逆位）是否一致
+  const identity = r => ({ id: r.id, pos: r.position, rev: r.reversed });
+  const entryRevealedIdentity = JSON.stringify(state.revealed.map(identity));
+
+  const existingIndex = state.history.findIndex(h => 
+    h.question === state.question && 
+    JSON.stringify(h.revealed.map(identity)) === entryRevealedIdentity
+  );
+
   const entry = {
-    id: Date.now(),
-    date: new Date().toLocaleString(),
+    id: existingIndex !== -1 ? state.history[existingIndex].id : Date.now(),
+    date: existingIndex !== -1 ? state.history[existingIndex].date : new Date().toLocaleString(),
     question: state.question,
     spreadName: state.spread ? state.spread.name : '',
     revealed: state.revealed.map(r => ({
@@ -41,12 +51,6 @@ function saveToHistory() {
     overallAI: state.overallAI || '',
     overallReasoning: state.overallReasoning || ''
   };
-  
-  // 避免同一占卜多次保存（例如重复点击AI解读后）
-  const existingIndex = state.history.findIndex(h => 
-    h.question === entry.question && 
-    JSON.stringify(h.revealed) === JSON.stringify(entry.revealed)
-  );
   
   if (existingIndex !== -1) {
     state.history[existingIndex] = entry;
@@ -89,6 +93,10 @@ function loadHistory(id) {
   document.getElementById('questionInput').value = state.question;
   document.getElementById('questionInput').disabled = true;
   document.getElementById('btnRestartArea').style.display = 'flex';
+  
+  // 清理详情区域
+  document.getElementById('cardDetailArea').style.display = 'none';
+  
   renderReveal();
   showStep(4);
   

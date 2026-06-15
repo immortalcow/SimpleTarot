@@ -415,54 +415,54 @@ const SPREADS = [
   },
   { 
     name:"五张十字",   
-    desc:"全面分析。涵盖现状、挑战、过去、近期未来和最终结果。", 
+    desc:"快速全景分析。代表现状、过去、未来、目标与根源。", 
     grid: { rows: 3, cols: 3 },
     positions:[
       { name: "现状", row: 2, col: 2 },
-      { name: "挑战", row: 2, col: 2, offset: { x: 5, y: 5 } }, // 交叉叠加
       { name: "过去", row: 2, col: 1 },
-      { name: "近期未来", row: 2, col: 3 },
-      { name: "最终结果", row: 1, col: 2 }
+      { name: "未来", row: 2, col: 3 },
+      { name: "目标/潜在", row: 1, col: 2 },
+      { name: "基础/根源", row: 3, col: 2 }
     ] 
   },
   { 
-    name:"二選一",     
-    desc:"面临两难抉择。分别展示两个选择的发展和结果。", 
+    name:"二选一",     
+    desc:"V型分支牌阵。清晰展示两个选择的路径发展与最终结果。", 
     grid: { rows: 3, cols: 3 },
     positions:[
-      { name: "当前状况", row: 2, col: 2 },
-      { name: "选择A的发展", row: 1, col: 1 },
-      { name: "选择B的发展", row: 1, col: 3 },
-      { name: "选择A的结果", row: 3, col: 1 },
-      { name: "选择B的结果", row: 3, col: 3 }
+      { name: "当前状况", row: 3, col: 2 },
+      { name: "选择A的发展", row: 2, col: 1 },
+      { name: "选择B的发展", row: 2, col: 3 },
+      { name: "选择A的结果", row: 1, col: 1 },
+      { name: "选择B的结果", row: 1, col: 3 }
     ] 
   },
   { 
     name:"六芒星",     
     desc:"深度揭示问题的全貌。", 
-    grid: { rows: 3, cols: 3 },
+    grid: { rows: 5, cols: 5 },
     positions:[
-      { name: "过去/根源", row: 1, col: 2 },
-      { name: "现在", row: 2, col: 1 },
-      { name: "未来", row: 2, col: 3 },
-      { name: "对策/行动", row: 3, col: 2 },
-      { name: "环境/他人", row: 1, col: 3 },
-      { name: "希望与恐惧", row: 3, col: 1 },
-      { name: "最终结果", row: 2, col: 2 }
+      { name: "过去/根源", row: 1, col: 3 },
+      { name: "现在", row: 3, col: 1 },
+      { name: "未来", row: 3, col: 5 },
+      { name: "对策/行动", row: 5, col: 3 },
+      { name: "环境/他人", row: 2, col: 4 },
+      { name: "希望与恐惧", row: 4, col: 2 },
+      { name: "最终结果", row: 3, col: 3 }
     ] 
   },
   { 
     name:"七张马蹄",   
     desc:"逐层深入分析从过去到最终结果的脉络。", 
-    grid: { rows: 3, cols: 4 },
+    grid: { rows: 3, cols: 5 },
     positions:[
       { name: "过去", row: 3, col: 1 },
       { name: "现在", row: 2, col: 1 },
       { name: "隐藏影响", row: 1, col: 2 },
-      { name: "障碍", row: 1, col: 3 },
-      { name: "环境态度", row: 2, col: 4 },
-      { name: "行动建议", row: 3, col: 4 },
-      { name: "最终结果", row: 2, col: 2.5 }
+      { name: "障碍", row: 1, col: 4 },
+      { name: "环境态度", row: 2, col: 5 },
+      { name: "行动建议", row: 3, col: 5 },
+      { name: "最终结果", row: 2, col: 3 }
     ] 
   },
   { 
@@ -480,18 +480,6 @@ const SPREADS = [
       { name: "环境/他人", row: 3, col: 4 },
       { name: "希望与恐惧", row: 2, col: 4 },
       { name: "最终结果", row: 1, col: 4 }
-    ] 
-  },
-  { 
-    name:"关系牌型",   
-    desc:"探索两人之间的关系。", 
-    grid: { rows: 3, cols: 3 },
-    positions:[
-      { name: "你自己", row: 2, col: 1 },
-      { name: "对方", row: 2, col: 3 },
-      { name: "关系现状", row: 2, col: 2 },
-      { name: "挑战", row: 1, col: 2 },
-      { name: "未来发展", row: 3, col: 2 }
     ] 
   },
 ];
