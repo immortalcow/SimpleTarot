@@ -8,7 +8,8 @@ const state = {
   shuffled: false,
   cutPos: 0,
   selectedCards: [], // indices into deck
-  revealed: [],      // [{cardObj, position, aiText}]
+  revealed: [],      // [{cardObj, position, flipped}]
+  flippedCount: 0,   // Number of cards flipped in current session
   aiEnabled: false,
   apiBaseUrl: '',
   apiKey: '',
@@ -33,8 +34,10 @@ function saveToHistory() {
     revealed: state.revealed.map(r => ({
       id: r.id,
       reversed: r.reversed,
-      position: r.position
+      position: r.position,
+      flipped: r.flipped || false
     })),
+    flippedCount: state.flippedCount,
     overallAI: state.overallAI || '',
     overallReasoning: state.overallReasoning || ''
   };
@@ -79,6 +82,7 @@ function loadHistory(id) {
   state.question = h.question;
   state.spread = SPREADS.find(s => s.name === h.spreadName) || SPREADS[0];
   state.revealed = h.revealed;
+  state.flippedCount = h.flippedCount || 0;
   state.overallAI = h.overallAI;
   state.overallReasoning = h.overallReasoning;
   
@@ -376,39 +380,101 @@ function goToStep4() {
   state.revealed = picks.map((card, i) => ({
     id: card.id,
     reversed: card.reversed,
-    position: state.spread.positions[i] || `位置${i + 1}`
+    position: (state.spread.positions[i] && state.spread.positions[i].name) || `位置${i + 1}`,
+    flipped: false
   }));
+  state.flippedCount = 0;
   renderReveal();
 }
+
 function renderReveal() {
-  const area = document.getElementById('revealArea');
-  area.innerHTML = state.revealed.map((r, i) => {
-    const meaning = CARD_MEANINGS[r.id];
-    if (!meaning) return '';
-    const name = meaning.cn || r.id;
-    const en = meaning.en || '';
-    const text = r.reversed ? meaning.reversed : meaning.upright;
-    const orientClass = r.reversed ? 'reversed' : 'upright';
-    const orientLabel = r.reversed ? '逆位' : '正位';
-    return `
-    <div class="reveal-card" id="reveal${i}">
-      <img src="static/cards/${r.id}.jpg" alt="${name}"
-           class="${r.reversed ? 'reversed-img' : ''}"
-           onerror="this.onerror=null;this.src='static/cards/card-back.svg';">
-      <div class="card-info">
-        <div class="card-name">${name} <span style="font-size:0.8em;color:var(--text-dim)">${en}</span>
-          <span class="card-orientation ${orientClass}">${orientLabel}</span>
-        </div>
-        <div class="card-position">📍 ${r.position}</div>
-        <div class="card-meaning">${text}</div>
-      </div>
-    </div>`;
-  }).join('');
-  document.getElementById('btnOverallReading').style.display = state.aiEnabled ? 'inline-block' : 'none';
-  document.getElementById('overallReading').style.display = 'none';
+  const layout = document.getElementById('spreadLayout');
+  const spread = state.spread;
   
-  // 渲染完成后立即保存初始记录
+  // Configure Grid
+  layout.style.gridTemplateRows = `repeat(${spread.grid.rows}, 180px)`;
+  layout.style.gridTemplateColumns = `repeat(${spread.grid.cols}, 110px)`;
+  
+  layout.innerHTML = state.revealed.map((r, i) => {
+    const posCfg = spread.positions[i];
+    const row = posCfg.row || 1;
+    const col = posCfg.col || 1;
+    const offset = posCfg.offset || { x: 0, y: 0 };
+    const rotation = posCfg.rotate || 0;
+    
+    // 决定是否是“下一个待翻牌”
+    const isNext = (i === state.flippedCount);
+    const isFlipped = r.flipped;
+    
+    return `
+      <div class="spread-item ${isFlipped ? 'flipped' : ''} ${isNext ? 'next-to-flip' : ''}" 
+           id="spreadItem${i}"
+           style="grid-row: ${row}; grid-column: ${col}; transform: translate(${offset.x}px, ${offset.y}px) rotate(${rotation}deg);"
+           onclick="handleCardClick(${i})">
+        <div class="card-inner">
+          <div class="card-back">
+            <img src="static/cards/card-back.svg" alt="背面">
+          </div>
+          <div class="card-front ${r.reversed ? 'reversed' : ''}">
+            <img src="static/cards/${r.id}.jpg" alt="${r.id}" 
+                 onerror="this.onerror=null;this.src='static/cards/card-back.svg';">
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  updateRevealUI();
   saveToHistory();
+}
+
+function handleCardClick(i) {
+  const card = state.revealed[i];
+  
+  // 如果是按顺序待翻开的牌
+  if (i === state.flippedCount && !card.flipped) {
+    card.flipped = true;
+    state.flippedCount++;
+    renderReveal(); // 重新渲染以更新状态和高亮
+    showCardDetail(i);
+  } 
+  // 如果是已经翻开的牌，点击查看详情
+  else if (card.flipped) {
+    showCardDetail(i);
+  }
+}
+
+function showCardDetail(i) {
+  const r = state.revealed[i];
+  const meaning = CARD_MEANINGS[r.id];
+  if (!meaning) return;
+
+  const detailArea = document.getElementById('cardDetailArea');
+  const detailPos = document.getElementById('detailPos');
+  const detailName = document.getElementById('detailName');
+  const detailOrient = document.getElementById('detailOrient');
+  const detailMeaning = document.getElementById('detailMeaning');
+
+  detailArea.style.display = 'block';
+  detailPos.textContent = `📍 ${r.position}`;
+  detailName.textContent = meaning.cn;
+  detailOrient.textContent = r.reversed ? '逆位' : '正位';
+  detailOrient.className = `detail-orient ${r.reversed ? 'reversed' : 'upright'}`;
+  detailMeaning.textContent = r.reversed ? meaning.reversed : meaning.upright;
+
+  // 高亮当前选中的牌
+  document.querySelectorAll('.spread-item').forEach((el, idx) => {
+    el.classList.toggle('active-detail', idx === i);
+  });
+}
+
+function updateRevealUI() {
+  const allFlipped = state.flippedCount >= state.revealed.length;
+  document.getElementById('aiReadingActions').style.display = (allFlipped && state.aiEnabled) ? 'flex' : 'none';
+  
+  if (allFlipped && state.overallAI) {
+      document.getElementById('overallReading').style.display = 'block';
+  }
 }
 
 // ---- AI Integration ----

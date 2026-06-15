@@ -263,23 +263,118 @@ body::before {
 .card-slot.chosen::after { content: '✓'; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-size: 1.5em; color: var(--gold); z-index: 1; text-shadow: 0 0 10px rgba(0,0,0,0.8); }
 .card-slot.selected-slot { opacity: 0.4; pointer-events: none; }
 
-/* Reveal Area */
-.reveal-area { display: grid; gap: 20px; }
-.reveal-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 20px; display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
-.reveal-card img { width: 130px; height: auto; border-radius: 6px; box-shadow: 0 4px 16px rgba(201,168,76,0.2); transition: transform 0.3s; }
-.reveal-card img.reversed-img { transform: rotate(180deg); }
-.reveal-card .card-info { flex: 1; min-width: 200px; }
-.reveal-card .card-name { color: var(--gold); font-size: 1.15em; font-weight: bold; }
-.reveal-card .card-orientation { font-size: 0.8em; margin-left: 6px; }
-.reveal-card .card-orientation.upright { color: #8f8; }
-.reveal-card .card-orientation.reversed { color: #f88; }
-.reveal-card .card-position { color: var(--gold-dark); font-size: 0.85em; margin-bottom: 6px; }
-.reveal-card .card-meaning { color: var(--text-dim); font-size: 0.9em; line-height: 1.7; }
-.reveal-card .card-keywords { color: var(--text-dimmer); font-size: 0.8em; margin-top: 4px; }
-.reveal-card .ai-interp { margin-top: 10px; padding: 12px; background: var(--input-bg); border-left: 3px solid var(--gold-dark); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; color: #b8a8d8; font-size: 0.85em; line-height: 1.7; white-space: pre-wrap; }
-.reveal-card .ai-interp .ai-label { color: var(--gold-dark); font-size: 0.8em; margin-bottom: 4px; }
+/* Reveal Area & Layout */
+.spread-container {
+  width: 100%;
+  overflow-x: auto;
+  padding: 20px 0;
+  margin-bottom: 20px;
+  background: rgba(0,0,0,0.2);
+  border-radius: var(--radius);
+}
+.spread-layout {
+  display: grid;
+  gap: 20px;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto;
+  position: relative;
+  min-height: 300px;
+}
+.spread-item {
+  position: relative;
+  width: 100px;
+  height: 170px;
+  perspective: 1000px;
+  cursor: pointer;
+}
+.spread-item .card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.6s;
+  transform-style: preserve-3d;
+}
+.spread-item.flipped .card-inner {
+  transform: rotateY(180deg);
+}
+.spread-item .card-front, .spread-item .card-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  overflow: hidden;
+}
+.spread-item .card-back {
+  background: var(--card-bg);
+  border: 2px solid var(--border);
+}
+.spread-item .card-back img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.spread-item .card-front {
+  transform: rotateY(180deg);
+}
+.spread-item .card-front img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.spread-item .card-front.reversed img {
+  transform: rotate(180deg);
+}
 
-/* Overall Reading */
+/* Highlighting */
+.spread-item.next-to-flip {
+  outline: 3px solid var(--gold);
+  outline-offset: 4px;
+  animation: pulseGold 1.5s infinite;
+  z-index: 5;
+}
+@keyframes pulseGold {
+  0% { box-shadow: 0 0 0 0 rgba(244, 217, 128, 0.4); }
+  70% { box-shadow: 0 0 0 15px rgba(244, 217, 128, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(244, 217, 128, 0); }
+}
+
+.spread-item.active-detail {
+  outline: 2px solid var(--gold-dark);
+  outline-offset: 2px;
+}
+
+/* Detail Area */
+.card-detail-area {
+  background: var(--input-bg);
+  border: 1px solid var(--gold-dark);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  margin-top: 20px;
+  animation: slideUp 0.3s ease-out;
+}
+@keyframes slideUp { from {opacity:0; transform:translateY(10px);} to {opacity:1; transform:translateY(0);} }
+.detail-header {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
+}
+.detail-pos { color: var(--gold-dark); font-weight: bold; font-size: 0.9em; }
+.detail-name { color: var(--gold); font-size: 1.1em; font-weight: bold; }
+.detail-orient { font-size: 0.8em; padding: 2px 6px; border-radius: 4px; }
+.detail-orient.upright { background: rgba(0,255,0,0.1); color: #8f8; }
+.detail-orient.reversed { background: rgba(255,0,0,0.1); color: #f88; }
+.detail-meaning { color: var(--text-dim); line-height: 1.6; font-size: 0.95em; }
+
+/* Existing classes replacement or safety */
+.reveal-area { display: none; } /* Hide old reveal area if any scripts still hit it */
+
+/* Overall Reading adjustment */
 .overall-reading { background: linear-gradient(135deg, var(--accent), var(--input-bg)); border: 1px solid var(--gold-dark); border-radius: var(--radius); padding: 24px; margin-top: 20px; }
 .overall-reading h3 { color: var(--gold); margin-bottom: 12px; }
 .overall-reading .content { color: #b8a8d8; line-height: 1.8; font-size: 0.95em; white-space: pre-wrap; }

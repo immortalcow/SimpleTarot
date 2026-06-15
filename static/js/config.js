@@ -395,12 +395,103 @@ const CARD_MEANINGS = {
 };
 
 const SPREADS = [
-  { name:"单张牌",     desc:"快速直接的答案。适合简单的问题或每日指引。", positions:["核心指引"] },
-  { name:"三张牌",     desc:"经典牌型。分别代表过去（影响问题的根源）、现在（当前状态）和未来（可能的发展方向）。", positions:["过去","现在","未来"] },
-  { name:"五张十字",   desc:"全面分析。涵盖现状、挑战、过去、近期未来和最终结果。", positions:["现状","挑战","过去","近期未来","最终结果"] },
-  { name:"二选一",     desc:"面临两难抉择时使用。分别展示两个选择各自的发展脉络和最终结果。", positions:["当前状况","选择A的发展","选择B的发展","选择A的结果","选择B的结果"] },
-  { name:"六芒星",     desc:"以大卫之星的六芒结构展开，从七个维度深度揭示问题的全貌。", positions:["过去/根源","现在","未来","对策/行动","环境/他人","希望与恐惧","最终结果"] },
-  { name:"七张马蹄",   desc:"经典马蹄形布局。逐层深入分析从过去到最终结果的脉络。", positions:["过去","现在","隐藏影响","障碍","环境态度","行动建议","最终结果"] },
-  { name:"凯尔特十字", desc:"最全面深入的牌型。揭示问题核心、影响因素、希望与恐惧，以及最终结果。适合复杂问题的深度解析。", positions:["核心/现状","交叉/阻碍","基础/根源","近期过去","潜在/目标","近期未来","自我态度","环境/他人","希望与恐惧","最终结果"] },
-  { name:"关系牌型",   desc:"探索两人之间的关系。分别代表你、对方、关系现状、挑战和未来发展。", positions:["你自己","对方","关系现状","挑战","未来发展"] },
+  { 
+    name:"单张牌",     
+    desc:"快速直接的答案。适合简单的问题或每日指引。", 
+    grid: { rows: 1, cols: 1 },
+    positions:[
+      { name: "核心指引", row: 1, col: 1 }
+    ] 
+  },
+  { 
+    name:"三张牌",     
+    desc:"经典牌型。分别代表过去、现在和未来。", 
+    grid: { rows: 1, cols: 3 },
+    positions:[
+      { name: "过去", row: 1, col: 1 },
+      { name: "现在", row: 1, col: 2 },
+      { name: "未来", row: 1, col: 3 }
+    ] 
+  },
+  { 
+    name:"五张十字",   
+    desc:"全面分析。涵盖现状、挑战、过去、近期未来和最终结果。", 
+    grid: { rows: 3, cols: 3 },
+    positions:[
+      { name: "现状", row: 2, col: 2 },
+      { name: "挑战", row: 2, col: 2, offset: { x: 5, y: 5 } }, // 交叉叠加
+      { name: "过去", row: 2, col: 1 },
+      { name: "近期未来", row: 2, col: 3 },
+      { name: "最终结果", row: 1, col: 2 }
+    ] 
+  },
+  { 
+    name:"二選一",     
+    desc:"面临两难抉择。分别展示两个选择的发展和结果。", 
+    grid: { rows: 3, cols: 3 },
+    positions:[
+      { name: "当前状况", row: 2, col: 2 },
+      { name: "选择A的发展", row: 1, col: 1 },
+      { name: "选择B的发展", row: 1, col: 3 },
+      { name: "选择A的结果", row: 3, col: 1 },
+      { name: "选择B的结果", row: 3, col: 3 }
+    ] 
+  },
+  { 
+    name:"六芒星",     
+    desc:"深度揭示问题的全貌。", 
+    grid: { rows: 3, cols: 3 },
+    positions:[
+      { name: "过去/根源", row: 1, col: 2 },
+      { name: "现在", row: 2, col: 1 },
+      { name: "未来", row: 2, col: 3 },
+      { name: "对策/行动", row: 3, col: 2 },
+      { name: "环境/他人", row: 1, col: 3 },
+      { name: "希望与恐惧", row: 3, col: 1 },
+      { name: "最终结果", row: 2, col: 2 }
+    ] 
+  },
+  { 
+    name:"七张马蹄",   
+    desc:"逐层深入分析从过去到最终结果的脉络。", 
+    grid: { rows: 3, cols: 4 },
+    positions:[
+      { name: "过去", row: 3, col: 1 },
+      { name: "现在", row: 2, col: 1 },
+      { name: "隐藏影响", row: 1, col: 2 },
+      { name: "障碍", row: 1, col: 3 },
+      { name: "环境态度", row: 2, col: 4 },
+      { name: "行动建议", row: 3, col: 4 },
+      { name: "最终结果", row: 2, col: 2.5 }
+    ] 
+  },
+  { 
+    name:"凯尔特十字", 
+    desc:"最全面深入的牌型。揭示问题核心、影响因素、希望与恐惧。", 
+    grid: { rows: 4, cols: 4 },
+    positions:[
+      { name: "核心/现状", row: 3, col: 2 },
+      { name: "交叉/阻碍", row: 3, col: 2, rotate: 90 },
+      { name: "基础/根源", row: 4, col: 2 },
+      { name: "近期过去", row: 3, col: 1 },
+      { name: "潜在/目标", row: 2, col: 2 },
+      { name: "近期未来", row: 3, col: 3 },
+      { name: "自我态度", row: 4, col: 4 },
+      { name: "环境/他人", row: 3, col: 4 },
+      { name: "希望与恐惧", row: 2, col: 4 },
+      { name: "最终结果", row: 1, col: 4 }
+    ] 
+  },
+  { 
+    name:"关系牌型",   
+    desc:"探索两人之间的关系。", 
+    grid: { rows: 3, cols: 3 },
+    positions:[
+      { name: "你自己", row: 2, col: 1 },
+      { name: "对方", row: 2, col: 3 },
+      { name: "关系现状", row: 2, col: 2 },
+      { name: "挑战", row: 1, col: 2 },
+      { name: "未来发展", row: 3, col: 2 }
+    ] 
+  },
 ];

@@ -109,10 +109,22 @@
 
   <!-- Step 4: Reveal -->
   <div class="card" id="step4" style="display:none;">
-    <div class="step-title"><span class="step-num">4</span> 牌面揭示</div>
-    <div class="reveal-area" id="revealArea"></div>
-    <div class="btn-row mt-16">
-      <button class="btn-primary" id="btnOverallReading" onclick="doOverallReading()" style="display:none;">🔮 AI 解读</button>
+    <div class="step-title"><span class="step-num">4</span> 牌阵展示</div>
+    <div class="spread-container" id="spreadContainer">
+      <div class="spread-layout" id="spreadLayout"></div>
+    </div>
+    
+    <div class="card-detail-area" id="cardDetailArea" style="display: none;">
+      <div class="detail-header">
+        <span class="detail-pos" id="detailPos">位置</span>
+        <span class="detail-name" id="detailName">牌名</span>
+        <span class="detail-orient" id="detailOrient">正位</span>
+      </div>
+      <div class="detail-meaning" id="detailMeaning">点击牌面查看详细释义</div>
+    </div>
+
+    <div class="btn-row mt-16" id="aiReadingActions" style="display:none;">
+      <button class="btn-primary" id="btnOverallReading" onclick="doOverallReading()">🔮 AI 整体解读</button>
     </div>
     <div class="overall-reading" id="overallReading" style="display:none;"></div>
   </div>
