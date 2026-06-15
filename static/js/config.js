@@ -443,11 +443,11 @@ const SPREADS = [
     grid: { rows: 5, cols: 5 },
     positions:[
       { name: "过去/根源", row: 1, col: 3 },
-      { name: "现在", row: 3, col: 1 },
-      { name: "未来", row: 3, col: 5 },
+      { name: "现在", row: 4, col: 5 },
+      { name: "未来", row: 4, col: 1 },
       { name: "对策/行动", row: 5, col: 3 },
-      { name: "环境/他人", row: 2, col: 4 },
-      { name: "希望与恐惧", row: 4, col: 2 },
+      { name: "环境/他人", row: 2, col: 1 },
+      { name: "希望与恐惧", row: 2, col: 5 },
       { name: "最终结果", row: 3, col: 3 }
     ] 
   },
