@@ -164,8 +164,9 @@ body::before {
 .settings-panel h3 { color: var(--gold-dark); margin-bottom: 12px; font-size: 1em; }
 .settings-row { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
 .settings-row label { min-width: 80px; color: var(--text-dim); font-size: 0.9em; }
-.settings-row input, .settings-row select { flex: 1; min-width: 180px; padding: 8px 12px; background: var(--input-bg); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 0.9em; }
-.settings-row input:focus, .settings-row select:focus { outline: none; border-color: var(--gold-dark); }
+.settings-row input, .settings-row select, .settings-row textarea { flex: 1; min-width: 180px; padding: 8px 12px; background: var(--input-bg); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 0.9em; font-family: inherit; }
+.settings-row input:focus, .settings-row select:focus, .settings-row textarea:focus { outline: none; border-color: var(--gold-dark); }
+.settings-row textarea { min-height: 80px; resize: vertical; }
 .settings-row select option { background: #1a1040; color: var(--text); }
 .settings-row .hint { width: 100%; font-size: 0.75em; color: var(--text-dimmer); margin-top: -4px; }
 .btn-save { background: linear-gradient(135deg, var(--gold-dark), var(--gold-darker)); color: #0d0620; border: none; padding: 8px 20px; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 0.9em; }
@@ -370,9 +371,6 @@ body::before {
 .detail-orient.upright { background: rgba(0,255,0,0.1); color: #8f8; }
 .detail-orient.reversed { background: rgba(255,0,0,0.1); color: #f88; }
 .detail-meaning { color: var(--text-dim); line-height: 1.6; font-size: 0.95em; }
-
-/* Existing classes replacement or safety */
-.reveal-area { display: none; } /* Hide old reveal area if any scripts still hit it */
 
 /* Overall Reading adjustment */
 .overall-reading { background: linear-gradient(135deg, var(--accent), var(--input-bg)); border: 1px solid var(--gold-dark); border-radius: var(--radius); padding: 24px; margin-top: 20px; }

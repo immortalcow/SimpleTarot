@@ -7,6 +7,7 @@ const state = {
   deck: [],        // [{id, reversed}]
   shuffled: false,
   cutPos: 0,
+  shuffleCount: 0,
   selectedCards: [], // indices into deck
   revealed: [],      // [{cardObj, position, flipped}]
   flippedCount: 0,   // Number of cards flipped in current session
@@ -16,6 +17,8 @@ const state = {
   apiKey: '',
   apiModel: '',
   apiMaxTokens: 4096,
+  divinerStyle: 'normal',
+  customPersona: '',
   history: [],        // loaded from localStorage
 };
 
@@ -32,8 +35,8 @@ function saveToHistory() {
   const identity = r => ({ id: r.id, pos: r.position, rev: r.reversed });
   const entryRevealedIdentity = JSON.stringify(state.revealed.map(identity));
 
-  const existingIndex = state.history.findIndex(h => 
-    h.question === state.question && 
+  const existingIndex = state.history.findIndex(h =>
+    h.question === state.question &&
     JSON.stringify(h.revealed.map(identity)) === entryRevealedIdentity
   );
 
@@ -52,7 +55,7 @@ function saveToHistory() {
     overallAI: state.overallAI || '',
     overallReasoning: state.overallReasoning || ''
   };
-  
+
   state.currentHistoryId = entry.id;
 
   if (existingIndex !== -1) {
@@ -60,7 +63,7 @@ function saveToHistory() {
   } else {
     state.history.unshift(entry);
   }
-  
+
   localStorage.setItem('tarot_history', JSON.stringify(state.history));
   renderHistory();
 }
@@ -71,7 +74,7 @@ function renderHistory() {
     container.innerHTML = '<p style="text-align:center;color:var(--text-dimmer);margin-top:20px;font-size:0.9em;">暂无历史记录</p>';
     return;
   }
-  
+
   container.innerHTML = state.history.map(h => `
     <div class="history-item" onclick="loadHistory(${h.id})">
       <div class="history-date">${h.date}</div>
@@ -85,29 +88,37 @@ function renderHistory() {
 function loadHistory(id) {
   const h = state.history.find(item => item.id === id);
   if (!h) return;
-  
+
   state.currentHistoryId = id;
   state.question = h.question;
-  state.spread = SPREADS.find(s => s.name === h.spreadName) || SPREADS[0];
+
+  // 查找牌阵，若不存在则提示错误而非暴力回退
+  const foundSpread = SPREADS.find(s => s.name === h.spreadName);
+  if (!foundSpread) {
+    showToast(`❌ 牌阵 "${h.spreadName}" 已弃用或不存在，无法加载`);
+    return;
+  }
+  state.spread = foundSpread;
+
   state.revealed = h.revealed;
   state.flippedCount = h.flippedCount || 0;
   state.overallAI = h.overallAI;
   state.overallReasoning = h.overallReasoning;
-  
+
   document.getElementById('questionInput').value = state.question;
   document.getElementById('questionInput').disabled = true;
   document.getElementById('btnRestartArea').style.display = 'flex';
-  
+
   // 清理详情区域
   document.getElementById('cardDetailArea').style.display = 'none';
-  
+
   renderReveal();
   showStep(4);
-  
+
   if (state.overallAI) {
     const overall = document.getElementById('overallReading');
     overall.style.display = 'block';
-    
+
     let reasoningHtml = '';
     if (state.overallReasoning) {
       reasoningHtml = `
@@ -119,7 +130,7 @@ function loadHistory(id) {
           <div class="reasoning-content" id="reasoningContent">${escHtml(state.overallReasoning)}</div>
         </div>`;
     }
-    
+
     overall.innerHTML = `
       <h3>🔮 综合解读</h3>
       ${reasoningHtml}
@@ -128,16 +139,16 @@ function loadHistory(id) {
   } else {
     document.getElementById('overallReading').style.display = 'none';
   }
-  
+
   toggleSidebar();
 }
 
 function deleteHistory(event, id) {
   event.stopPropagation();
   if (!confirm('确定要删除这条记录吗？')) return;
-  
+
   const isDeletingCurrent = (id === state.currentHistoryId);
-  
+
   state.history = state.history.filter(h => h.id !== id);
   localStorage.setItem('tarot_history', JSON.stringify(state.history));
   renderHistory();
@@ -165,8 +176,6 @@ function getCookie(name) {
   return null;
 }
 
-let shuffleCount = 0;
-
 // ---- Init ----
 (function init() {
   try {
@@ -175,25 +184,30 @@ let shuffleCount = 0;
     if (!cfgStr) {
       cfgStr = localStorage.getItem('tarot_api_config');
     }
-    
+
     if (cfgStr) {
       // 自动迁移或刷新 Cookie 有效期（延长 30 天）
       setCookie('tarot_api_config', cfgStr, 30);
     }
-    
+
     const cfg = JSON.parse(cfgStr || '{}');
     state.apiBaseUrl = cfg.baseUrl || '';
     state.apiKey = cfg.apiKey || '';
     state.apiModel = cfg.model || '';
     state.apiMaxTokens = cfg.maxTokens || 4096;
+    state.divinerStyle = cfg.divinerStyle || 'normal';
+    state.customPersona = cfg.customPersona || '';
     state.aiEnabled = !!(state.apiKey && state.apiBaseUrl);
 
     state.history = JSON.parse(localStorage.getItem('tarot_history') || '[]');
-  } catch(e) {}
+  } catch (e) {
+    console.error('Initialization failed:', e);
+    showToast('⚠️ 配置加载失败，已重置');
+  }
   renderSettingsFields();
   updateApiUI();
   renderHistory();
-  
+
   showStep(1);
 })();
 
@@ -202,10 +216,20 @@ function renderSettingsFields() {
   document.getElementById('apiBaseUrl').value = state.apiBaseUrl;
   document.getElementById('apiKey').value = state.apiKey;
   document.getElementById('apiMaxTokens').value = state.apiMaxTokens;
+  document.getElementById('divinerStyle').value = state.divinerStyle;
+  document.getElementById('customPersona').value = state.customPersona;
+
+  onDivinerStyleChange(); // 初始化自定义行显示状态
+
   const sel = document.getElementById('apiModel');
-  sel.innerHTML = state.apiModel 
+  sel.innerHTML = state.apiModel
     ? `<option value="${escHtml(state.apiModel)}">${escHtml(state.apiModel)}</option>`
     : '<option value="">-- 请先获取 --</option>';
+}
+function onDivinerStyleChange() {
+  const style = document.getElementById('divinerStyle').value;
+  const customRow = document.getElementById('customPersonaRow');
+  customRow.style.display = style === 'custom' ? 'block' : 'none';
 }
 function toggleSettings() {
   document.getElementById('settingsPanel').classList.toggle('show');
@@ -216,13 +240,17 @@ function saveApiConfig() {
   state.apiKey = document.getElementById('apiKey').value.trim();
   state.apiModel = document.getElementById('apiModel').value || '';
   state.apiMaxTokens = parseInt(document.getElementById('apiMaxTokens').value) || 4096;
+  state.divinerStyle = document.getElementById('divinerStyle').value;
+  state.customPersona = document.getElementById('customPersona').value.trim();
   state.aiEnabled = !!(state.apiKey && state.apiBaseUrl);
 
   const config = {
     baseUrl: state.apiBaseUrl,
     apiKey: state.apiKey,
     model: state.apiModel,
-    maxTokens: state.apiMaxTokens
+    maxTokens: state.apiMaxTokens,
+    divinerStyle: state.divinerStyle,
+    customPersona: state.customPersona
   };
 
   // 保存到 Cookie (30天有效期)
@@ -243,12 +271,12 @@ async function fetchModels() {
   try {
     const models = await TarotAPI.fetchModels(baseUrl, apiKey);
     const sel = document.getElementById('apiModel');
-    sel.innerHTML = models.map(m => `<option value="${escHtml(m)}" ${m===state.apiModel?'selected':''}>${escHtml(m)}</option>`).join('');
+    sel.innerHTML = models.map(m => `<option value="${escHtml(m)}" ${m === state.apiModel ? 'selected' : ''}>${escHtml(m)}</option>`).join('');
     if (models.length > 0 && !state.apiModel) {
       state.apiModel = models[0];
     }
     showToast(`✅ 获取到 ${models.length} 个模型`);
-  } catch(e) {
+  } catch (e) {
     showToast('❌ ' + e.message);
   }
   btn.disabled = false;
@@ -269,12 +297,12 @@ function showStep(n) {
 function goBackToStep1() {
   state.shuffled = false;
   state.selectedCards = [];
-  shuffleCount = 0;
-  
+  state.shuffleCount = 0;
+
   // 重新启用问题输入
   document.getElementById('questionInput').disabled = false;
   document.getElementById('btnRestartArea').style.display = 'none';
-  
+
   showStep(1);
 }
 
@@ -313,14 +341,14 @@ function goToStep2() {
   state.shuffled = false;
   state.selectedCards = [];
   state.revealed = [];
-  shuffleCount = 0;
+  state.shuffleCount = 0;
   document.getElementById('shuffleCount').textContent = '点击牌堆洗牌 — 建议至少7次';
   document.getElementById('shuffleDeck').classList.remove('shuffling');
   document.getElementById('shuffleArea').style.display = '';
   document.getElementById('cutArea').style.display = 'none';
   document.getElementById('cutSlider').value = Math.floor(state.deck.length / 2);
   document.getElementById('cutSlider').max = state.deck.length - 1;
-  document.getElementById('cutInfo').textContent = `切牌位置: 第 ${Math.floor(state.deck.length/2)} 张`;
+  document.getElementById('cutInfo').textContent = `切牌位置: 第 ${Math.floor(state.deck.length / 2)} 张`;
   showStep(2);
 }
 
@@ -333,13 +361,13 @@ function doShuffle() {
   }
   // Randomize upright/reversed for each card
   deck.forEach(c => { c.reversed = Math.random() < 0.5; });
-  shuffleCount++;
+  state.shuffleCount++;
   state.shuffled = true;
-  document.getElementById('shuffleCount').textContent = `已洗牌 ${shuffleCount} 次`;
+  document.getElementById('shuffleCount').textContent = `已洗牌 ${state.shuffleCount} 次`;
   const sd = document.getElementById('shuffleDeck');
   sd.classList.add('shuffling');
   setTimeout(() => sd.classList.remove('shuffling'), 300);
-  if (shuffleCount >= 7) {
+  if (state.shuffleCount >= 7) {
     document.getElementById('shuffleArea').style.display = 'none';
     document.getElementById('cutArea').style.display = '';
   }
@@ -374,7 +402,7 @@ function renderCardSelection() {
       const i = r * cardsPerRow + c;
       const chosen = state.selectedCards.includes(i);
       html += `<div class="card-slot${chosen ? ' chosen' : ''}" id="slot${i}" onclick="pickCard(${i})">
-        <img src="static/cards/card-back.svg" alt="牌${i+1}">
+        <img src="static/cards/card-back.svg" alt="牌${i + 1}">
       </div>`;
     }
     html += '</div>';
@@ -399,7 +427,7 @@ function goToStep4() {
   state.revealed = picks.map((card, i) => ({
     id: card.id,
     reversed: card.reversed,
-    position: (state.spread.positions[i] && state.spread.positions[i].name) || `位置${i + 1}`,
+    position: state.spread.positions[i].name,
     flipped: false
   }));
   state.flippedCount = 0;
@@ -409,22 +437,22 @@ function goToStep4() {
 function renderReveal() {
   const layout = document.getElementById('spreadLayout');
   const spread = state.spread;
-  
+
   // Configure Grid
   layout.style.gridTemplateRows = `repeat(${spread.grid.rows}, 180px)`;
   layout.style.gridTemplateColumns = `repeat(${spread.grid.cols}, 110px)`;
-  
+
   layout.innerHTML = state.revealed.map((r, i) => {
     const posCfg = spread.positions[i];
     const row = posCfg.row || 1;
     const col = posCfg.col || 1;
     const offset = posCfg.offset || { x: 0, y: 0 };
     const rotation = posCfg.rotate || 0;
-    
+
     // 决定是否是“下一个待翻牌”
     const isNext = (i === state.flippedCount);
     const isFlipped = r.flipped;
-    
+
     return `
       <div class="spread-item ${isFlipped ? 'flipped' : ''} ${isNext ? 'next-to-flip' : ''}" 
            id="spreadItem${i}"
@@ -449,14 +477,14 @@ function renderReveal() {
 
 function handleCardClick(i) {
   const card = state.revealed[i];
-  
+
   // 如果是按顺序待翻开的牌
   if (i === state.flippedCount && !card.flipped) {
     card.flipped = true;
     state.flippedCount++;
     renderReveal(); // 重新渲染以更新状态和高亮
     showCardDetail(i);
-  } 
+  }
   // 如果是已经翻开的牌，点击查看详情
   else if (card.flipped) {
     showCardDetail(i);
@@ -490,9 +518,9 @@ function showCardDetail(i) {
 function updateRevealUI() {
   const allFlipped = state.flippedCount >= state.revealed.length;
   document.getElementById('aiReadingActions').style.display = (allFlipped && state.aiEnabled) ? 'flex' : 'none';
-  
+
   if (allFlipped && state.overallAI) {
-      document.getElementById('overallReading').style.display = 'block';
+    document.getElementById('overallReading').style.display = 'block';
   }
 }
 
@@ -514,11 +542,11 @@ async function doOverallReading() {
       <div class="reasoning-content" id="reasoningContent"></div>
     </div>
     <div class="content" id="readingContent"><span class="loading"></span> 连结中...</div>`;
-  
+
   const readingContent = document.getElementById('readingContent');
   const reasoningBlock = document.getElementById('reasoningBlock');
   const reasoningContent = document.getElementById('reasoningContent');
-  
+
   let fullContent = '';
   let fullReasoning = '';
 
@@ -528,12 +556,17 @@ async function doOverallReading() {
       const orient = r.reversed ? '逆位' : '正位';
       return `[${r.position}] ${m.cn}（${m.en}）- ${orient}`;
     }).join('\n');
-    
+
     const prompt = TAROT_PROMPTS.OVERALL_READING(state.question, state.spread.name, state.spread.positions.length, cardsInfo);
-    
+
+    // 获取人设提示词：优先使用有效的自定义，否则回退到预设及其默认值
+    const systemPrompt = (state.divinerStyle === 'custom' && state.customPersona)
+      ? state.customPersona
+      : (DIVINER_PERSONAS[state.divinerStyle] || DIVINER_PERSONAS['normal']).prompt;
+
     await TarotAPI.streamChat(
       state.apiBaseUrl, state.apiKey, state.apiModel,
-      TAROT_PROMPTS.SYSTEM_ROLE,
+      systemPrompt,
       prompt, state.apiMaxTokens,
       (chunk) => {
         if (chunk.reasoning) {
@@ -551,7 +584,7 @@ async function doOverallReading() {
     state.overallAI = fullContent;
     state.overallReasoning = fullReasoning;
     saveToHistory(); // AI 解读完成后再自动保存一次以包含解读内容
-  } catch(e) {
+  } catch (e) {
     readingContent.innerHTML = `<div class="error-panel">
       <div class="error-header">❌ 调用 API 出错</div>
       <div style="margin: 8px 0; max-height: 200px; overflow-y: auto;">${escHtml(e.message)}</div>
@@ -574,7 +607,7 @@ function showToast(msg) {
   setTimeout(() => t.remove(), 2600);
 }
 function escHtml(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 function copyToClipboard(text) {
   const el = document.createElement('textarea');

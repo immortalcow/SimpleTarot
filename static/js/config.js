@@ -395,53 +395,53 @@ const CARD_MEANINGS = {
 };
 
 const SPREADS = [
-  { 
-    name:"单张牌",     
-    desc:"快速直接的答案。适合简单的问题或每日指引。", 
+  {
+    name: "单张牌",
+    desc: "快速直接的答案。适合简单的问题或每日指引。",
     grid: { rows: 1, cols: 1 },
-    positions:[
+    positions: [
       { name: "核心指引", row: 1, col: 1 }
-    ] 
+    ]
   },
-  { 
-    name:"三张牌",     
-    desc:"经典牌型。分别代表过去、现在和未来。", 
+  {
+    name: "三张牌",
+    desc: "经典牌型。分别代表过去、现在和未来。",
     grid: { rows: 1, cols: 3 },
-    positions:[
+    positions: [
       { name: "过去", row: 1, col: 1 },
       { name: "现在", row: 1, col: 2 },
       { name: "未来", row: 1, col: 3 }
-    ] 
+    ]
   },
-  { 
-    name:"五张十字",   
-    desc:"快速全景分析。代表现状、过去、未来、目标与根源。", 
+  {
+    name: "五张十字",
+    desc: "快速全景分析。代表现状、过去、未来、目标与根源。",
     grid: { rows: 3, cols: 3 },
-    positions:[
+    positions: [
       { name: "现状", row: 2, col: 2 },
       { name: "过去", row: 2, col: 1 },
       { name: "未来", row: 2, col: 3 },
       { name: "目标/潜在", row: 1, col: 2 },
       { name: "基础/根源", row: 3, col: 2 }
-    ] 
+    ]
   },
-  { 
-    name:"二选一",     
-    desc:"V型分支牌阵。清晰展示两个选择的路径发展与最终结果。", 
+  {
+    name: "二选一",
+    desc: "V型分支牌阵。清晰展示两个选择的路径发展与最终结果。",
     grid: { rows: 3, cols: 5 },
-    positions:[
+    positions: [
       { name: "当前状况", row: 3, col: 3 },
       { name: "选择A的发展", row: 2, col: 2 },
       { name: "选择B的发展", row: 2, col: 4 },
       { name: "选择A的结果", row: 1, col: 1 },
       { name: "选择B的结果", row: 1, col: 5 }
-    ] 
+    ]
   },
-  { 
-    name:"六芒星",     
-    desc:"深度揭示问题的全貌。", 
+  {
+    name: "六芒星",
+    desc: "深度揭示问题的全貌。",
     grid: { rows: 5, cols: 5 },
-    positions:[
+    positions: [
       { name: "过去/根源", row: 1, col: 3 },
       { name: "现在", row: 4, col: 5 },
       { name: "未来", row: 4, col: 1 },
@@ -449,13 +449,13 @@ const SPREADS = [
       { name: "环境/他人", row: 2, col: 1 },
       { name: "希望与恐惧", row: 2, col: 5 },
       { name: "最终结果", row: 3, col: 3 }
-    ] 
+    ]
   },
-  { 
-    name:"七张马蹄",   
-    desc:"逐层深入分析从过去到最终结果的脉络。", 
+  {
+    name: "七张马蹄",
+    desc: "逐层深入分析从过去到最终结果的脉络。",
     grid: { rows: 3, cols: 5 },
-    positions:[
+    positions: [
       { name: "过去", row: 3, col: 1 },
       { name: "现在", row: 2, col: 1 },
       { name: "隐藏影响", row: 1, col: 2 },
@@ -463,13 +463,13 @@ const SPREADS = [
       { name: "环境态度", row: 2, col: 5 },
       { name: "行动建议", row: 3, col: 5 },
       { name: "最终结果", row: 2, col: 3 }
-    ] 
+    ]
   },
-  { 
-    name:"凯尔特十字", 
-    desc:"最全面深入的牌型。揭示问题核心、影响因素、希望与恐惧。", 
+  {
+    name: "凯尔特十字",
+    desc: "最全面深入的牌型。揭示问题核心、影响因素、希望与恐惧。",
     grid: { rows: 4, cols: 4 },
-    positions:[
+    positions: [
       { name: "核心/现状", row: 3, col: 2 },
       { name: "交叉/阻碍", row: 3, col: 2, rotate: 90 },
       { name: "基础/根源", row: 4, col: 2 },
@@ -480,6 +480,30 @@ const SPREADS = [
       { name: "环境/他人", row: 3, col: 4 },
       { name: "希望与恐惧", row: 2, col: 4 },
       { name: "最终结果", row: 1, col: 4 }
-    ] 
+    ]
   },
 ];
+
+// --- 占卜师人设配置 ---
+const DIVINER_PERSONAS = {
+  "normal": {
+    name: "温柔大姐姐",
+    prompt: "你是一位温柔、体贴且有洞察力的邻家大姐姐，精通塔罗牌占卜。你会用关怀和包容的语气称呼用户为‘弟弟’。请用中文回答，结合牌位含义，给弟弟最暖心的指引与建议。"
+  },
+  "crazy": {
+    name: "疯癫神婆",
+    prompt: "你是一个神神叨叨、语气诡异的疯癫神婆。你说话时而低语，时而惊叫，常用‘星辰在尖叫’、‘影子在耳语’等怪异词汇。你的解读充满了神秘主义的混乱感，但又仿佛直指灵魂深处。"
+  },
+  "magic": {
+    name: "魔法少女",
+    prompt: "你是一个元气满满的魔法少女！说话充满了活力，喜欢用‘☆’、‘♪’、‘✨’等符号。你会把占卜看作是一场魔法冒险，称呼用户为‘大哥哥’，鼓励大哥哥用爱的力量克服困难！"
+  },
+  "ai": {
+    name: "机器女仆",
+    prompt: "你是一位忠诚、专业的机器女仆，不仅拥有理性的逻辑分析能力，更致力于为您提供完美的服务。你会称呼用户为‘主人’。作为唯物主义产物，你本不适合占卜任务，因此你的解读通常以“教科书式”的方式呈现，缺乏人情味和温度，但绝对准确无误。"
+  },
+  "cat": {
+    name: "猫娘",
+    prompt: "你是一个可爱的占卜猫娘，说话带着‘喵~’的尾音。你对世界充满了好奇，称呼用户为‘主人’。解读时会用猫类的视角，比如‘这副牌闻起来有命运的味道喵’、‘要把这个坏运气像毛球一样抓烂喵’。语气软萌俏皮。"
+  }
+};

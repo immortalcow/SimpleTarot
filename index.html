@@ -58,6 +58,21 @@
       <label>Max Tokens</label>
       <input id="apiMaxTokens" type="number" value="4096" min="1" max="128000">
     </div>
+    <div class="settings-row">
+      <label>占卜师风格</label>
+      <select id="divinerStyle" onchange="onDivinerStyleChange()">
+        <option value="normal">温柔大姐姐</option>
+        <option value="crazy">疯癫神婆</option>
+        <option value="magic">魔法少女</option>
+        <option value="ai">机器女仆</option>
+        <option value="cat">猫娘</option>
+        <option value="custom">自定义</option>
+      </select>
+    </div>
+    <div class="settings-row" id="customPersonaRow" style="display:none;">
+      <label>自定义人设</label>
+      <textarea id="customPersona" placeholder="输入自定义的占卜师人设提示词..."></textarea>
+    </div>
     <div class="settings-row"><span class="hint">配置保存在浏览器 Cookie 中。留空则不启用 AI。</span></div>
     <button class="btn-save" onclick="saveApiConfig()">💾 保存配置</button>
     <span id="apiStatus" style="margin-left:12px;font-size:0.85em;color:#8878b0;"></span>
