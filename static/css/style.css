@@ -183,6 +183,31 @@ body::before {
 .question-input { width: 100%; padding: 14px 18px; background: var(--input-bg); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 1em; resize: vertical; min-height: 60px; transition: border-color 0.3s; font-family: inherit; }
 .question-input:focus { outline: none; border-color: var(--gold-dark); }
 .question-input::placeholder { color: var(--text-dimmer); }
+.question-input:disabled { opacity: 0.7; cursor: not-allowed; background: rgba(13, 6, 32, 0.5); }
+
+.btn-restart-vertical {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  background: var(--input-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--gold-dark);
+  font-size: 0.8em;
+  cursor: pointer;
+  transition: all 0.2s;
+  writing-mode: vertical-rl;
+  letter-spacing: 2px;
+  padding: 8px 0;
+  line-height: 1;
+  text-align: center;
+}
+.btn-restart-vertical:hover {
+  border-color: var(--gold-dark);
+  background: var(--accent);
+  color: var(--gold);
+}
 
 /* Spread Grid */
 .spread-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; margin-top: 6px; }

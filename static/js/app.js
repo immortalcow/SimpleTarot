@@ -83,6 +83,8 @@ function loadHistory(id) {
   state.overallReasoning = h.overallReasoning;
   
   document.getElementById('questionInput').value = state.question;
+  document.getElementById('questionInput').disabled = true;
+  document.getElementById('btnRestartArea').style.display = 'flex';
   renderReveal();
   showStep(4);
   
@@ -245,6 +247,11 @@ function goBackToStep1() {
   state.shuffled = false;
   state.selectedCards = [];
   shuffleCount = 0;
+  
+  // 重新启用问题输入
+  document.getElementById('questionInput').disabled = false;
+  document.getElementById('btnRestartArea').style.display = 'none';
+  
   showStep(1);
 }
 
@@ -274,6 +281,11 @@ function goToStep2() {
   if (!q) { showToast('请先输入你的问题~'); return; }
   if (!state.spread) { showToast('请选择牌型~'); return; }
   state.question = q;
+
+  // 禁用问题输入并显示重新开始按钮
+  document.getElementById('questionInput').disabled = true;
+  document.getElementById('btnRestartArea').style.display = 'flex';
+
   state.deck = Object.keys(CARD_MEANINGS).map(id => ({ id, reversed: false }));
   state.shuffled = false;
   state.selectedCards = [];

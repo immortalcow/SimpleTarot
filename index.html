@@ -59,16 +59,19 @@
     <span id="apiStatus" style="margin-left:12px;font-size:0.85em;color:#8878b0;"></span>
   </div>
 
-  <!-- Import Modal removed -->
-
-  <!-- Step 1: Question + Spread -->
-  <div class="card" id="step1">
-    <div class="step-title"><span class="step-num">1</span> 提问 & 选择牌型</div>
-    <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+  <!-- Question Box -->
+  <div class="card" id="questionBox" style="padding: 18px 20px; margin-bottom: 20px;">
+    <div style="display: flex; gap: 10px;">
       <textarea class="question-input" id="questionInput" style="flex: 1;"
         placeholder="请输入你想了解的问题，例如：我最近的事业发展方向是什么？我和TA的关系会如何发展？..."></textarea>
+      <button id="btnRestartArea" class="btn-restart-vertical" onclick="resetAll()" style="display: none;">重新开始</button>
     </div>
-    <p style="color:var(--text-dim);margin:12px 0 8px;font-size:0.9em;">选择一种牌型：</p>
+  </div>
+
+  <!-- Step 1: Spread Selection -->
+  <div class="card" id="step1">
+    <div class="step-title"><span class="step-num">1</span> 选择牌型</div>
+    <p style="color:var(--text-dim);margin:0 0 8px;font-size:0.9em;">选择一种牌型：</p>
     <div class="spread-grid" id="spreadGrid"></div>
     <div class="btn-row mt-16">
       <button class="btn-primary" id="btnStartShuffle" onclick="goToStep2()" disabled>开始洗牌 🔀</button>
@@ -112,9 +115,6 @@
       <button class="btn-primary" id="btnOverallReading" onclick="doOverallReading()" style="display:none;">🔮 AI 解读</button>
     </div>
     <div class="overall-reading" id="overallReading" style="display:none;"></div>
-    <div class="btn-row mt-16">
-      <button class="btn-secondary" onclick="resetAll()">🔄 重新开始</button>
-    </div>
   </div>
 
 </div>
