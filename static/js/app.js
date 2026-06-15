@@ -10,6 +10,7 @@ const state = {
   selectedCards: [], // indices into deck
   revealed: [],      // [{cardObj, position, flipped}]
   flippedCount: 0,   // Number of cards flipped in current session
+  currentHistoryId: null, // ID of the currently loaded history item
   aiEnabled: false,
   apiBaseUrl: '',
   apiKey: '',
@@ -52,6 +53,8 @@ function saveToHistory() {
     overallReasoning: state.overallReasoning || ''
   };
   
+  state.currentHistoryId = entry.id;
+
   if (existingIndex !== -1) {
     state.history[existingIndex] = entry;
   } else {
@@ -83,6 +86,7 @@ function loadHistory(id) {
   const h = state.history.find(item => item.id === id);
   if (!h) return;
   
+  state.currentHistoryId = id;
   state.question = h.question;
   state.spread = SPREADS.find(s => s.name === h.spreadName) || SPREADS[0];
   state.revealed = h.revealed;
@@ -131,9 +135,16 @@ function loadHistory(id) {
 function deleteHistory(event, id) {
   event.stopPropagation();
   if (!confirm('确定要删除这条记录吗？')) return;
+  
+  const isDeletingCurrent = (id === state.currentHistoryId);
+  
   state.history = state.history.filter(h => h.id !== id);
   localStorage.setItem('tarot_history', JSON.stringify(state.history));
   renderHistory();
+
+  if (isDeletingCurrent) {
+    resetAll();
+  }
 }
 
 function setCookie(name, value, days = 30) {
