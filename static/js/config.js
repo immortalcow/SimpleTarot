@@ -428,13 +428,13 @@ const SPREADS = [
   { 
     name:"二选一",     
     desc:"V型分支牌阵。清晰展示两个选择的路径发展与最终结果。", 
-    grid: { rows: 3, cols: 3 },
+    grid: { rows: 3, cols: 5 },
     positions:[
-      { name: "当前状况", row: 3, col: 2 },
-      { name: "选择A的发展", row: 2, col: 1 },
-      { name: "选择B的发展", row: 2, col: 3 },
+      { name: "当前状况", row: 3, col: 3 },
+      { name: "选择A的发展", row: 2, col: 2 },
+      { name: "选择B的发展", row: 2, col: 4 },
       { name: "选择A的结果", row: 1, col: 1 },
-      { name: "选择B的结果", row: 1, col: 3 }
+      { name: "选择B的结果", row: 1, col: 5 }
     ] 
   },
   { 
