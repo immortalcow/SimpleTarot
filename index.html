@@ -7,7 +7,11 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>🔮 塔罗占卜</title>
-<link rel="stylesheet" href="static/css/style.css?v=20260615_v1">
+<script>
+  // 动态生成版本号（可以使用 Date.now() 确保每次刷新都不同，或者使用随机数）
+  window.APP_VERSION = 'v' + Date.now();
+  document.write(`<link rel="stylesheet" href="static/css/style.css?v=${window.APP_VERSION}">`);
+</script>
 </head>
 <body>
 
@@ -131,9 +135,18 @@
 
 </div>
 
-<script src="static/js/config.js?v=20260615_v1"></script>
-<script src="static/js/markdown.js?v=20260615_v1"></script>
-<script src="static/js/api.js?v=20260615_v1"></script>
-<script src="static/js/app.js?v=20260615_v1"></script>
+<script>
+  (function() {
+    const scripts = [
+      'static/js/config.js',
+      'static/js/markdown.js',
+      'static/js/api.js',
+      'static/js/app.js'
+    ];
+    scripts.forEach(src => {
+      document.write(`<script src="${src}?v=${window.APP_VERSION}"><\/script>`);
+    });
+  })();
+</script>
 </body>
 </html>

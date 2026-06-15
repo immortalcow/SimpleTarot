@@ -16,21 +16,21 @@
 
 ```text
 SimpleTarot/
-├── index.html        # 应用主界面及逻辑入口
+├── index.html        # 核心入口，支持资源自动版本化加载
 └── static/           # 静态资源目录
     ├── cards/        # 塔罗牌图片资源 (.jpg / .svg)
     ├── css/
     │   └── style.css # 样式表
     └── js/
-        ├── api.js      # LLM API 交互模块 (OpenAI 兼容)
-        ├── app.js      # 主应用逻辑（洗牌、选牌、UI 流程控制）
-        ├── config.js   # 核心配置（78张牌释义、牌阵定义）
-        └── markdown.js # 简单的 Markdown 渲染支持
+        ├── api.js      # LLM API 交互模块
+        ├── app.js      # 主应用逻辑（含状态恢复与自动存档）
+        ├── config.js   # 核心配置（牌义、5x5几何牌阵定义）
+        └── markdown.js # Markdown 渲染支持
 ```
 
 ## 🚀 快速开始
 
-1. **直接运行**：使用任何现代浏览器打开 `index.html` 即可开始。
+1. **直接运行**：使用任何现代浏览器打开 `index.html` 即可开始。项目内置动态资源加载机制，无需担心浏览器缓存旧版代码。
 2. **AI 配置** (可选)：
    - 点击页面顶部的 **⚙️ AI 设置**。
    - 输入你的 `BASE_URL` (例如 `https://api.deepseek.com/v1`) 和 `API_KEY`。
@@ -44,10 +44,10 @@ SimpleTarot/
 
 ## 🛠️ 技术栈
 
-- **前端**：原生 HTML5, CSS3, JavaScript (ES6+)。
-- **交互**：CSS3 Animations, SVG 矢量绘图。
-- **数据存储**：浏览器 Cookie (主要用于 AI 配置) 及 Window.localStorage。
-- **外部 API**：支持所有标准 OpenAI Chat Completions 协议的语言模型 API。
+- **前端框架**：原生 HTML5, CSS3, JavaScript (ES6+)。
+- **交互效果**：CSS3 Animations, SVG 矢量绘图, HTML5 Grid 布局。
+- **数据存储**：浏览器 Cookie (AI 配置) 及 Window.localStorage (占卜历史)。
+- **外部 API**：支持标准 OpenAI Chat Completions 协议。
 
 ## 📜 许可证
 
