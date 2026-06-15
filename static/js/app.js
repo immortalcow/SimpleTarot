@@ -213,6 +213,12 @@ function getCookie(name) {
 
 // ---- Settings ----
 function renderSettingsFields() {
+  // 动态渲染占卜师风格选项
+  const styleSel = document.getElementById('divinerStyle');
+  styleSel.innerHTML = Object.entries(DIVINER_PERSONAS).map(([key, item]) => 
+    `<option value="${key}">${item.name}</option>`
+  ).join('') + '<option value="custom">自定义</option>';
+
   document.getElementById('apiBaseUrl').value = state.apiBaseUrl;
   document.getElementById('apiKey').value = state.apiKey;
   document.getElementById('apiMaxTokens').value = state.apiMaxTokens;
@@ -229,7 +235,7 @@ function renderSettingsFields() {
 function onDivinerStyleChange() {
   const style = document.getElementById('divinerStyle').value;
   const customRow = document.getElementById('customPersonaRow');
-  customRow.style.display = style === 'custom' ? 'block' : 'none';
+  customRow.style.display = style === 'custom' ? 'flex' : 'none';
 }
 function toggleSettings() {
   document.getElementById('settingsPanel').classList.toggle('show');

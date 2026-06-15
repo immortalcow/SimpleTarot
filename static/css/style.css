@@ -165,6 +165,7 @@ body::before {
 .settings-row { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
 .settings-row label { min-width: 80px; color: var(--text-dim); font-size: 0.9em; }
 .settings-row input, .settings-row select, .settings-row textarea { flex: 1; min-width: 180px; padding: 8px 12px; background: var(--input-bg); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 0.9em; font-family: inherit; }
+.settings-row textarea { align-self: flex-start; }
 .settings-row input:focus, .settings-row select:focus, .settings-row textarea:focus { outline: none; border-color: var(--gold-dark); }
 .settings-row textarea { min-height: 80px; resize: vertical; }
 .settings-row select option { background: #1a1040; color: var(--text); }
