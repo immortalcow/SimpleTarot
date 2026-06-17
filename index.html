@@ -43,34 +43,32 @@
     <h3>🤖 OpenAI 兼容 API</h3>
     <div class="settings-row">
       <label>BASE_URL</label>
-      <input id="apiBaseUrl" placeholder="https://api.openai.com/v1">
+      <input id="apiBaseUrl" placeholder="https://api.openai.com/v1" oninput="checkSettingsChanged()">
     </div>
     <div class="settings-row">
       <label>API_KEY</label>
-      <input id="apiKey" type="password" placeholder="sk-...">
+      <input id="apiKey" type="password" placeholder="sk-..." oninput="checkSettingsChanged()">
     </div>
     <div class="settings-row">
       <label>模型</label>
-      <select id="apiModel"><option value="">-- 请先获取 --</option></select>
+      <select id="apiModel" onchange="checkSettingsChanged()"><option value="">-- 请先获取 --</option></select>
       <button class="btn-small" id="btnFetchModels" onclick="fetchModels()">📡 获取模型列表</button>
     </div>
     <div class="settings-row">
       <label>Max Tokens</label>
-      <input id="apiMaxTokens" type="number" value="4096" min="1" max="128000">
+      <input id="apiMaxTokens" type="number" value="4096" min="1" max="128000" oninput="checkSettingsChanged()">
     </div>
     <div class="settings-row">
       <label>占卜师风格</label>
-      <select id="divinerStyle" onchange="onDivinerStyleChange()">
+      <select id="divinerStyle" onchange="onDivinerStyleChange(); checkSettingsChanged()">
         <!-- 动态加载 -->
       </select>
     </div>
     <div class="settings-row" id="customPersonaRow" style="display:none;">
       <label>自定义人设</label>
-      <textarea id="customPersona" placeholder="输入占卜师人设提示词，例如“你是一个资深的塔罗牌占卜师...”等"></textarea>
+      <textarea id="customPersona" placeholder="输入占卜师人设提示词，例如“你是一个资深的塔罗牌占卜师...”等" oninput="checkSettingsChanged()"></textarea>
     </div>
-    <div class="settings-row"><span class="hint">配置保存在浏览器 Cookie 中。留空则不启用 AI。</span></div>
-    <button class="btn-save" onclick="saveApiConfig()">💾 保存配置</button>
-    <span id="apiStatus" style="margin-left:12px;font-size:0.85em;color:#8878b0;"></span>
+    <button class="btn-save" id="saveConfigBtn" onclick="saveApiConfig()" disabled>💾 保存配置</button>
   </div>
 
   <!-- Question Box -->

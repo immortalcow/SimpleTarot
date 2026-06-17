@@ -212,7 +212,7 @@ function getCookie(name) {
     showToast('⚠️ 配置加载失败，已重置');
   }
   renderSettingsFields();
-  updateApiUI();
+  updateSaveButtonState();
   renderHistory();
 
   showStep(1);
@@ -271,8 +271,35 @@ function saveApiConfig() {
   // 同时同步到 localStorage 作为备份
   localStorage.setItem('tarot_api_config', JSON.stringify(config));
 
-  updateApiUI();
+  updateSaveButtonState();
   showToast(state.aiEnabled ? '✅ AI 已启用' : '💾 已保存（AI 未启用）');
+}
+function checkSettingsChanged() {
+  const current = {
+    baseUrl: document.getElementById('apiBaseUrl').value.trim(),
+    apiKey: document.getElementById('apiKey').value.trim(),
+    model: document.getElementById('apiModel').value || '',
+    maxTokens: parseInt(document.getElementById('apiMaxTokens').value) || 4096,
+    divinerStyle: document.getElementById('divinerStyle').value,
+    customPersona: document.getElementById('customPersona').value.trim()
+  };
+
+  const hasChanged = 
+    current.baseUrl !== state.apiBaseUrl ||
+    current.apiKey !== state.apiKey ||
+    current.model !== state.apiModel ||
+    current.maxTokens !== state.apiMaxTokens ||
+    current.divinerStyle !== state.divinerStyle ||
+    current.customPersona !== state.customPersona;
+
+  updateSaveButtonState(hasChanged);
+}
+
+function updateSaveButtonState(hasChanged = false) {
+  const btn = document.getElementById('saveConfigBtn');
+  if (!btn) return;
+  btn.disabled = !hasChanged;
+  btn.classList.toggle('unsaved', hasChanged);
 }
 async function fetchModels() {
   const baseUrl = document.getElementById('apiBaseUrl').value.trim();
@@ -285,9 +312,12 @@ async function fetchModels() {
     const models = await TarotAPI.fetchModels(baseUrl, apiKey);
     const sel = document.getElementById('apiModel');
     sel.innerHTML = models.map(m => `<option value="${escHtml(m)}" ${m === state.apiModel ? 'selected' : ''}>${escHtml(m)}</option>`).join('');
-    if (models.length > 0 && !state.apiModel) {
-      state.apiModel = models[0];
+    
+    // 只有在当前没有选中模型且获取到列表时，才默认选中第一个，但不立即修改 state
+    if (models.length > 0 && !document.getElementById('apiModel').value) {
+      document.getElementById('apiModel').value = models[0];
     }
+    checkSettingsChanged();
     showToast(`✅ 获取到 ${models.length} 个模型`);
   } catch (e) {
     showToast('❌ ' + e.message);

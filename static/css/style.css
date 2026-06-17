@@ -170,8 +170,19 @@ body::before {
 .settings-row textarea { min-height: 80px; resize: vertical; }
 .settings-row select option { background: #1a1040; color: var(--text); }
 .settings-row .hint { width: 100%; font-size: 0.75em; color: var(--text-dimmer); margin-top: -4px; }
-.btn-save { background: linear-gradient(135deg, var(--gold-dark), var(--gold-darker)); color: #0d0620; border: none; padding: 8px 20px; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 0.9em; }
+.btn-save { background: linear-gradient(135deg, var(--gold-dark), var(--gold-darker)); color: #0d0620; border: none; padding: 8px 20px; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 0.9em; transition: all 0.3s; }
 .btn-save:hover { filter: brightness(1.15); }
+.btn-save:disabled { opacity: 0.3; cursor: not-allowed; filter: grayscale(1); }
+.btn-save.unsaved {
+  animation: unsavedPulse 2s infinite;
+  box-shadow: 0 0 10px rgba(201,168,76,0.6);
+  border: 1px solid var(--gold);
+}
+@keyframes unsavedPulse {
+  0% { box-shadow: 0 0 5px rgba(201,168,76,0.5); transform: scale(1); }
+  50% { box-shadow: 0 0 15px rgba(201,168,76,0.8); transform: scale(1.02); }
+  100% { box-shadow: 0 0 5px rgba(201,168,76,0.5); transform: scale(1); }
+}
 .btn-small { background: none; border: 1px solid var(--border); color: var(--gold-dark); padding: 6px 14px; border-radius: 16px; cursor: pointer; font-size: 0.8em; transition: all 0.3s; }
 .btn-small:hover { border-color: var(--gold-dark); background: #1a1040; }
 .btn-small:disabled { opacity: 0.4; cursor: not-allowed; }
