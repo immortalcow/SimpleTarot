@@ -19,6 +19,7 @@ const state = {
   apiMaxTokens: 4096,
   divinerStyle: 'normal',
   customPersona: '',
+  includeMinorArcana: true,
   history: [],        // loaded from localStorage
 };
 
@@ -199,6 +200,12 @@ function getCookie(name) {
     state.customPersona = cfg.customPersona || '';
     state.aiEnabled = !!(state.apiKey && state.apiBaseUrl);
 
+    // 加载包含小阿尔卡纳的设定
+    const minorCookie = getCookie('tarot_minor_arcana');
+    state.includeMinorArcana = (minorCookie !== 'false'); // 默认 true
+    const checkEl = document.getElementById('includeMinorArcana');
+    if (checkEl) checkEl.checked = state.includeMinorArcana;
+
     state.history = JSON.parse(localStorage.getItem('tarot_history') || '[]');
   } catch (e) {
     console.error('Initialization failed:', e);
@@ -288,12 +295,12 @@ async function fetchModels() {
   btn.disabled = false;
   btn.textContent = '📡 获取模型列表';
 }
-function updateApiUI() {
-  document.getElementById('apiStatus').textContent = state.aiEnabled ? '✅ AI 已启用' : '⚪ AI 未启用';
-  document.getElementById('apiStatus').style.color = state.aiEnabled ? '#8f8' : '#8878b0';
+function onMinorArcanaChange() {
+  state.includeMinorArcana = document.getElementById('includeMinorArcana').checked;
+  setCookie('tarot_minor_arcana', state.includeMinorArcana.toString(), 30);
 }
 
-// ---- Navigation ----
+// ---- Step 1: Question + Spread ----
 function showStep(n) {
   for (let i = 1; i <= 4; i++) {
     const el = document.getElementById('step' + i);
@@ -343,7 +350,13 @@ function goToStep2() {
   document.getElementById('questionInput').disabled = true;
   document.getElementById('btnRestartArea').style.display = 'flex';
 
-  state.deck = Object.keys(CARD_MEANINGS).map(id => ({ id, reversed: false }));
+  // 根据设定初始化牌堆
+  let cardIds = Object.keys(CARD_MEANINGS);
+  if (!state.includeMinorArcana) {
+    cardIds = cardIds.filter(id => CARD_MEANINGS[id].type === 'major');
+  }
+  state.deck = cardIds.map(id => ({ id, reversed: false }));
+
   state.shuffled = false;
   state.selectedCards = [];
   state.revealed = [];
@@ -399,13 +412,20 @@ function goToStep3() {
 }
 function renderCardSelection() {
   const grid = document.getElementById('cardSelectGrid');
-  const rows = 6;
-  const cardsPerRow = 13;
+  let rows = 6;
+  let cardsPerRow = 13;
+
+  if (!state.includeMinorArcana) {
+    rows = 2;
+    cardsPerRow = 11;
+  }
+
   let html = '';
   for (let r = 0; r < rows; r++) {
     html += '<div class="card-row">';
     for (let c = 0; c < cardsPerRow; c++) {
       const i = r * cardsPerRow + c;
+      if (i >= state.deck.length) break; // 防止越界，虽然这里的行回控制好
       const chosen = state.selectedCards.includes(i);
       html += `<div class="card-slot${chosen ? ' chosen' : ''}" id="slot${i}" onclick="pickCard(${i})">
         <img src="static/cards/card-back.svg" alt="牌${i + 1}">

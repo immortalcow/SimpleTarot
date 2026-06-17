@@ -66,7 +66,7 @@
     </div>
     <div class="settings-row" id="customPersonaRow" style="display:none;">
       <label>自定义人设</label>
-      <textarea id="customPersona" placeholder="输入自定义的占卜师人设提示词..."></textarea>
+      <textarea id="customPersona" placeholder="输入占卜师人设提示词，例如“你是一个资深的塔罗牌占卜师...”等"></textarea>
     </div>
     <div class="settings-row"><span class="hint">配置保存在浏览器 Cookie 中。留空则不启用 AI。</span></div>
     <button class="btn-save" onclick="saveApiConfig()">💾 保存配置</button>
@@ -87,8 +87,12 @@
     <div class="step-title"><span class="step-num">1</span> 选择牌型</div>
     <p style="color:var(--text-dim);margin:0 0 8px;font-size:0.9em;">选择一种牌型：</p>
     <div class="spread-grid" id="spreadGrid"></div>
-    <div class="btn-row mt-16">
+    <div class="btn-row mt-16" style="display: flex; align-items: center; gap: 15px;">
       <button class="btn-primary" id="btnStartShuffle" onclick="goToStep2()" disabled>开始洗牌 🔀</button>
+      <label class="checkbox-container" style="display: flex; align-items: center; cursor: pointer; color: var(--text-dim); font-size: 0.9em; user-select: none;">
+        <input type="checkbox" id="includeMinorArcana" style="margin-right: 6px; cursor: pointer;" checked onchange="onMinorArcanaChange()">
+        包含小阿尔卡纳
+      </label>
     </div>
   </div>
 
