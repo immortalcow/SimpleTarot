@@ -305,7 +305,20 @@ body::before {
 }
 .detail-keywords {
   font-weight: bold;
-  color: var(--gold) !important;
+}
+.detail-image-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+.detail-image-container img {
+  max-width: 150px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  transition: transform 0.3s ease;
+}
+.detail-image-container img.reversed {
+  transform: rotate(180deg);
 }
 .persona-list {
   display: flex;

@@ -716,14 +716,22 @@ function showCardDetail(i) {
   const detailMeaning = document.getElementById('modalDetailMeaning');
   const detailKeywords = document.getElementById('modalDetailKeywords');
   const detailCommon = document.getElementById('modalDetailCommon');
+  const detailImage = document.getElementById('modalDetailImage');
+  const detailOrientHeader = document.getElementById('modalDetailOrientHeader');
+
+  const orientText = r.reversed ? '逆位' : '正位';
 
   detailPos.textContent = `📍 ${r.position}`;
   detailName.textContent = meaning.cn;
-  detailOrient.textContent = r.reversed ? '逆位' : '正位';
+  detailOrient.textContent = orientText;
   detailOrient.className = `detail-orient ${r.reversed ? 'reversed' : 'upright'}`;
   detailMeaning.textContent = r.reversed ? meaning.reversed : meaning.upright;
   detailKeywords.textContent = meaning.keywords || '无';
   detailCommon.textContent = meaning.common || '无';
+
+  detailImage.src = `static/cards/${r.id}.jpg`;
+  detailImage.className = r.reversed ? 'reversed' : '';
+  detailOrientHeader.textContent = `💡 ${orientText}提示`;
 
   overlay.classList.add('show');
 
@@ -770,8 +778,8 @@ async function doOverallReading() {
     const detail = r.reversed ? m.reversed : m.upright;
     return `[${r.position}] ${m.cn}（${m.en}）- ${orient}
 关键词：${m.keywords}
-牌面含义：${m.common}
-${orient}提示：${detail}`;
+提示：${detail}
+通用背景：${m.common}`;
   }).join('\n\n');
 
   const userPrompt = TAROT_PROMPTS.OVERALL_READING(state.question, state.spread.name, state.spread.positions.length, cardIds);
