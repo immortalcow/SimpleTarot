@@ -60,15 +60,38 @@
     </div>
     <div class="settings-row">
       <label>占卜师风格</label>
-      <select id="divinerStyle" onchange="onDivinerStyleChange(); checkSettingsChanged()">
-        <!-- 动态加载 -->
-      </select>
-    </div>
-    <div class="settings-row" id="customPersonaRow" style="display:none;">
-      <label>自定义人设</label>
-      <textarea id="customPersona" placeholder="输入占卜师人设提示词，例如“你是一个资深的塔罗牌占卜师...”等" oninput="checkSettingsChanged()"></textarea>
+      <div class="multi-select-container">
+        <div class="multi-select-header" onclick="toggleMultiSelect()">
+          <span id="selectedStylesText">选择占卜师 (0)</span>
+          <span class="arrow">▼</span>
+        </div>
+        <div class="multi-select-dropdown" id="styleDropdown">
+          <!-- 动态加载选项 -->
+        </div>
+      </div>
+      <button class="btn-small" onclick="showPersonaManager()">🎭 管理人设</button>
     </div>
     <button class="btn-save" id="saveConfigBtn" onclick="saveApiConfig()" disabled>💾 保存配置</button>
+  </div>
+
+  <!-- Persona Manager Modal -->
+  <div class="modal-overlay" id="personaModalOverlay">
+    <div class="modal card">
+      <div class="modal-header">
+        <h3>🎭 管理占卜师人设</h3>
+        <button class="btn-close-modal" onclick="closePersonaManager()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="personaList" class="persona-list">
+          <!-- 动态加载 -->
+        </div>
+        <button class="btn-small mt-16" onclick="addEmptyPersona()">➕ 添加新的人设</button>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="resetPersonas()">🔄 重置为默认</button>
+        <button class="btn-primary" onclick="savePersonas()">✅ 应用并关闭</button>
+      </div>
+    </div>
   </div>
 
   <!-- Question Box -->
@@ -130,21 +153,37 @@
       <div class="spread-layout" id="spreadLayout"></div>
     </div>
     
-    <div class="card-detail-area" id="cardDetailArea" style="display: none;">
-      <div class="detail-header">
-        <span class="detail-pos" id="detailPos">位置</span>
-        <span class="detail-name" id="detailName">牌名</span>
-        <span class="detail-orient" id="detailOrient">正位</span>
-      </div>
-      <div class="detail-meaning" id="detailMeaning">点击牌面查看详细释义</div>
-    </div>
-
-    <div class="btn-row mt-16" id="aiReadingActions" style="display:none;">
-      <button class="btn-primary" id="btnOverallReading" onclick="doOverallReading()">🔮 AI 整体解读</button>
-    </div>
     <div class="overall-reading" id="overallReading" style="display:none;"></div>
   </div>
 
+</div>
+
+<!-- Card Detail Modal -->
+<div class="modal-overlay" id="cardDetailModalOverlay">
+  <div class="modal card card-detail-modal">
+    <div class="modal-header">
+      <div class="detail-title-wrapper">
+        <span class="detail-pos" id="modalDetailPos">位置</span>
+        <h3 id="modalDetailName">牌名</h3>
+        <span class="detail-orient" id="modalDetailOrient">正位</span>
+      </div>
+      <button class="btn-close-modal" onclick="closeCardDetail()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="detail-section">
+        <h4>✨ 关键词</h4>
+        <p id="modalDetailKeywords" class="detail-keywords"></p>
+      </div>
+      <div class="detail-section">
+        <h4>📜 含义解读</h4>
+        <p id="modalDetailMeaning"></p>
+      </div>
+      <div class="detail-section">
+        <h4>📖 通用说明</h4>
+        <p id="modalDetailCommon"></p>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>

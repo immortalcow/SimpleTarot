@@ -17,8 +17,8 @@ const state = {
   apiKey: '',
   apiModel: '',
   apiMaxTokens: 4096,
-  divinerStyle: 'normal',
-  customPersona: '',
+  divinerStyles: ['normal'], // 数组，支持多选
+  personas: {},              // 从 localStorage 加载或初始化
   includeMinorArcana: true,
   history: [],        // loaded from localStorage
 };
@@ -53,8 +53,7 @@ function saveToHistory() {
       flipped: r.flipped || false
     })),
     flippedCount: state.flippedCount,
-    overallAI: state.overallAI || '',
-    overallReasoning: state.overallReasoning || ''
+    readings: state.readings || [] // 存储多个人设的解读结果
   };
 
   state.currentHistoryId = entry.id;
@@ -103,42 +102,43 @@ function loadHistory(id) {
 
   state.revealed = h.revealed;
   state.flippedCount = h.flippedCount || 0;
-  state.overallAI = h.overallAI;
-  state.overallReasoning = h.overallReasoning;
+  state.readings = h.readings || [];
 
   document.getElementById('questionInput').value = state.question;
   document.getElementById('questionInput').disabled = true;
   document.getElementById('btnRestartArea').style.display = 'flex';
 
-  // 清理详情区域
-  document.getElementById('cardDetailArea').style.display = 'none';
-
   renderReveal();
   showStep(4);
 
-  if (state.overallAI) {
-    const overall = document.getElementById('overallReading');
+  const overall = document.getElementById('overallReading');
+  if (state.readings && state.readings.length > 0) {
     overall.style.display = 'block';
-
-    let reasoningHtml = '';
-    if (state.overallReasoning) {
-      reasoningHtml = `
-        <div class="reasoning-block" id="reasoningBlock">
-          <div class="reasoning-header" onclick="this.parentElement.classList.toggle('open')">
-            <span>🤔 思考过程</span>
-            <span>▼</span>
-          </div>
-          <div class="reasoning-content" id="reasoningContent">${escHtml(state.overallReasoning)}</div>
-        </div>`;
-    }
-
-    overall.innerHTML = `
-      <h3>🔮 综合解读</h3>
-      ${reasoningHtml}
-      <div class="content" id="readingContent">${MarkdownParser.parse(state.overallAI)}</div>
-    `;
+    overall.innerHTML = `<h3>🔮 综合解读</h3>` + state.readings.map((r, idx) => {
+      let reasoningHtml = '';
+      if (r.reasoning) {
+        reasoningHtml = `
+          <div class="reasoning-block">
+            <div class="reasoning-header" onclick="toggleReasoning(this)">
+              <span>🤔 思考过程</span>
+              <span class="toggle-icon">▼</span>
+            </div>
+            <div class="reasoning-content">${escHtml(r.reasoning)}</div>
+          </div>`;
+      }
+      return `
+        <div class="reading-item">
+          <h4>
+            <span>${escHtml(r.personaName)} 的解读</span>
+            <span class="persona-tag">${escHtml(r.personaId)}</span>
+          </h4>
+          ${reasoningHtml}
+          <div class="content">${MarkdownParser.parse(r.content)}</div>
+        </div>
+      `;
+    }).join('');
   } else {
-    document.getElementById('overallReading').style.display = 'none';
+    overall.style.display = 'none';
   }
 
   toggleSidebar();
@@ -196,9 +196,17 @@ function getCookie(name) {
     state.apiKey = cfg.apiKey || '';
     state.apiModel = cfg.model || '';
     state.apiMaxTokens = cfg.maxTokens || 4096;
-    state.divinerStyle = cfg.divinerStyle || 'normal';
-    state.customPersona = cfg.customPersona || '';
+    state.divinerStyles = Array.isArray(cfg.divinerStyles) ? cfg.divinerStyles : ['normal'];
     state.aiEnabled = !!(state.apiKey && state.apiBaseUrl);
+
+    // 加载人设
+    const savedPersonas = localStorage.getItem('tarot_personas');
+    if (savedPersonas) {
+      state.personas = JSON.parse(savedPersonas);
+    } else {
+      state.personas = JSON.parse(JSON.stringify(DIVINER_PERSONAS));
+      localStorage.setItem('tarot_personas', JSON.stringify(state.personas));
+    }
 
     // 加载包含小阿尔卡纳的设定
     const minorCookie = getCookie('tarot_minor_arcana');
@@ -220,30 +228,170 @@ function getCookie(name) {
 
 // ---- Settings ----
 function renderSettingsFields() {
-  // 动态渲染占卜师风格选项
-  const styleSel = document.getElementById('divinerStyle');
-  styleSel.innerHTML = Object.entries(DIVINER_PERSONAS).map(([key, item]) => 
-    `<option value="${key}">${item.name}</option>`
-  ).join('') + '<option value="custom">自定义</option>';
+  renderStyleDropdown();
 
   document.getElementById('apiBaseUrl').value = state.apiBaseUrl;
   document.getElementById('apiKey').value = state.apiKey;
   document.getElementById('apiMaxTokens').value = state.apiMaxTokens;
-  document.getElementById('divinerStyle').value = state.divinerStyle;
-  document.getElementById('customPersona').value = state.customPersona;
-
-  onDivinerStyleChange(); // 初始化自定义行显示状态
 
   const sel = document.getElementById('apiModel');
   sel.innerHTML = state.apiModel
     ? `<option value="${escHtml(state.apiModel)}">${escHtml(state.apiModel)}</option>`
     : '<option value="">-- 请先获取 --</option>';
 }
-function onDivinerStyleChange() {
-  const style = document.getElementById('divinerStyle').value;
-  const customRow = document.getElementById('customPersonaRow');
-  customRow.style.display = style === 'custom' ? 'flex' : 'none';
+
+function renderStyleDropdown() {
+  const container = document.getElementById('styleDropdown');
+  if (!container) return;
+
+  container.innerHTML = Object.entries(state.personas).map(([id, p]) => `
+    <div class="style-option" onclick="toggleStyleSelect(event, '${id}')">
+      <input type="checkbox" id="check_${id}" ${state.divinerStyles.includes(id) ? 'checked' : ''} onclick="event.stopPropagation(); onStyleCheckChange()">
+      <span class="style-name">${escHtml(p.name)}</span>
+    </div>
+  `).join('');
+
+  updateSelectedStylesText();
 }
+
+function toggleMultiSelect() {
+  document.getElementById('styleDropdown').classList.toggle('show');
+}
+
+function toggleStyleSelect(event, id) {
+  const checkbox = document.getElementById(`check_${id}`);
+  checkbox.checked = !checkbox.checked;
+  onStyleCheckChange();
+}
+
+function onStyleCheckChange() {
+  const selected = [];
+  Object.keys(state.personas).forEach(id => {
+    if (document.getElementById(`check_${id}`).checked) {
+      selected.push(id);
+    }
+  });
+  updateSelectedStylesText(selected.length);
+  checkSettingsChanged();
+}
+
+function updateSelectedStylesText(count) {
+  if (count === undefined) {
+    count = state.divinerStyles.filter(id => state.personas[id]).length;
+  }
+  document.getElementById('selectedStylesText').textContent = `选择占卜师 (${count})`;
+}
+
+// 点击外部关闭下拉
+window.addEventListener('click', (e) => {
+  if (!e.target.closest('.multi-select-container')) {
+    const dropdown = document.getElementById('styleDropdown');
+    if (dropdown) dropdown.classList.remove('show');
+  }
+});
+
+// ---- Persona Manager ----
+function showPersonaManager() {
+  renderPersonaList();
+  document.getElementById('personaModalOverlay').classList.add('show');
+}
+
+function closePersonaManager() {
+  document.getElementById('personaModalOverlay').classList.remove('show');
+}
+
+function renderPersonaList() {
+  const container = document.getElementById('personaList');
+  container.innerHTML = Object.entries(state.personas).map(([id, p]) => `
+    <div class="persona-item" data-id="${id}">
+      <button class="btn-del-persona" onclick="deletePersona('${id}')">🗑️ 删除</button>
+      <div class="settings-row">
+        <label>名称</label>
+        <input class="p-name" value="${escHtml(p.name)}" placeholder="人设名称">
+      </div>
+      <div class="settings-row">
+        <label>Prompt</label>
+        <textarea class="p-prompt" placeholder="占卜师人设提示词">${escHtml(p.prompt)}</textarea>
+      </div>
+    </div>
+  `).join('');
+}
+
+function addEmptyPersona() {
+  const id = 'p_' + Date.now();
+  const newItem = document.createElement('div');
+  newItem.className = 'persona-item';
+  newItem.dataset.id = id;
+  newItem.innerHTML = `
+    <button class="btn-del-persona" onclick="deletePersona('${id}')">🗑️ 删除</button>
+    <div class="settings-row">
+      <label>名称</label>
+      <input class="p-name" value="" placeholder="新的人设">
+    </div>
+    <div class="settings-row">
+      <label>Prompt</label>
+      <textarea class="p-prompt" placeholder="占卜师人设提示词"></textarea>
+    </div>
+  `;
+  document.getElementById('personaList').appendChild(newItem);
+  newItem.scrollIntoView({ behavior: 'smooth' });
+}
+
+function deletePersona(id) {
+  const item = document.querySelector(`.persona-item[data-id="${id}"]`);
+  if (item) item.remove();
+}
+
+function resetPersonas() {
+  if (!confirm('确定要重置所有人设为默认设置吗？已选中的人设可能需要重新选择。')) return;
+  state.personas = JSON.parse(JSON.stringify(DIVINER_PERSONAS));
+  localStorage.setItem('tarot_personas', JSON.stringify(state.personas));
+  
+  // 重置后重新加载列表
+  renderPersonaList();
+  
+  // 关键：同步更新下拉列表
+  state.divinerStyles = state.divinerStyles.filter(id => state.personas[id]);
+  if (state.divinerStyles.length === 0) {
+    state.divinerStyles = ['normal'];
+  }
+  renderStyleDropdown();
+  
+  showToast('🔄 已重置为默认人设');
+}
+
+function savePersonas() {
+  const newPersonas = {};
+  const items = document.querySelectorAll('.persona-item');
+  items.forEach(item => {
+    const id = item.dataset.id;
+    const name = item.querySelector('.p-name').value.trim();
+    const prompt = item.querySelector('.p-prompt').value.trim();
+    if (name) {
+      newPersonas[id] = { name, prompt };
+    }
+  });
+
+  if (Object.keys(newPersonas).length === 0) {
+    showToast('❌ 至少需要保留一个人设');
+    return;
+  }
+
+  state.personas = newPersonas;
+  localStorage.setItem('tarot_personas', JSON.stringify(state.personas));
+  
+  // 过滤掉已经不存在的已选中人设
+  state.divinerStyles = state.divinerStyles.filter(id => state.personas[id]);
+  if (state.divinerStyles.length === 0) {
+    state.divinerStyles = [Object.keys(state.personas)[0]];
+  }
+
+  renderStyleDropdown();
+  closePersonaManager();
+  checkSettingsChanged();
+  showToast('✅ 人设已更新');
+}
+
 function toggleSettings() {
   document.getElementById('settingsPanel').classList.toggle('show');
   document.getElementById('btnSettings').classList.toggle('active');
@@ -253,8 +401,16 @@ function saveApiConfig() {
   state.apiKey = document.getElementById('apiKey').value.trim();
   state.apiModel = document.getElementById('apiModel').value || '';
   state.apiMaxTokens = parseInt(document.getElementById('apiMaxTokens').value) || 4096;
-  state.divinerStyle = document.getElementById('divinerStyle').value;
-  state.customPersona = document.getElementById('customPersona').value.trim();
+  
+  // 获取多选的人设
+  const selected = [];
+  Object.keys(state.personas).forEach(id => {
+    if (document.getElementById(`check_${id}`).checked) {
+      selected.push(id);
+    }
+  });
+  state.divinerStyles = selected.length > 0 ? selected : ['normal'];
+  
   state.aiEnabled = !!(state.apiKey && state.apiBaseUrl);
 
   const config = {
@@ -262,8 +418,7 @@ function saveApiConfig() {
     apiKey: state.apiKey,
     model: state.apiModel,
     maxTokens: state.apiMaxTokens,
-    divinerStyle: state.divinerStyle,
-    customPersona: state.customPersona
+    divinerStyles: state.divinerStyles
   };
 
   // 保存到 Cookie (30天有效期)
@@ -275,13 +430,19 @@ function saveApiConfig() {
   showToast(state.aiEnabled ? '✅ AI 已启用' : '💾 已保存（AI 未启用）');
 }
 function checkSettingsChanged() {
+  const selected = [];
+  const personaIds = Object.keys(state.personas);
+  personaIds.forEach(id => {
+    const el = document.getElementById(`check_${id}`);
+    if (el && el.checked) selected.push(id);
+  });
+
   const current = {
     baseUrl: document.getElementById('apiBaseUrl').value.trim(),
     apiKey: document.getElementById('apiKey').value.trim(),
     model: document.getElementById('apiModel').value || '',
     maxTokens: parseInt(document.getElementById('apiMaxTokens').value) || 4096,
-    divinerStyle: document.getElementById('divinerStyle').value,
-    customPersona: document.getElementById('customPersona').value.trim()
+    divinerStyles: selected
   };
 
   const hasChanged = 
@@ -289,8 +450,7 @@ function checkSettingsChanged() {
     current.apiKey !== state.apiKey ||
     current.model !== state.apiModel ||
     current.maxTokens !== state.apiMaxTokens ||
-    current.divinerStyle !== state.divinerStyle ||
-    current.customPersona !== state.customPersona;
+    JSON.stringify(current.divinerStyles) !== JSON.stringify(state.divinerStyles);
 
   updateSaveButtonState(hasChanged);
 }
@@ -552,23 +712,32 @@ function showCardDetail(i) {
   const meaning = CARD_MEANINGS[r.id];
   if (!meaning) return;
 
-  const detailArea = document.getElementById('cardDetailArea');
-  const detailPos = document.getElementById('detailPos');
-  const detailName = document.getElementById('detailName');
-  const detailOrient = document.getElementById('detailOrient');
-  const detailMeaning = document.getElementById('detailMeaning');
+  const overlay = document.getElementById('cardDetailModalOverlay');
+  const detailPos = document.getElementById('modalDetailPos');
+  const detailName = document.getElementById('modalDetailName');
+  const detailOrient = document.getElementById('modalDetailOrient');
+  const detailMeaning = document.getElementById('modalDetailMeaning');
+  const detailKeywords = document.getElementById('modalDetailKeywords');
+  const detailCommon = document.getElementById('modalDetailCommon');
 
-  detailArea.style.display = 'block';
   detailPos.textContent = `📍 ${r.position}`;
   detailName.textContent = meaning.cn;
   detailOrient.textContent = r.reversed ? '逆位' : '正位';
   detailOrient.className = `detail-orient ${r.reversed ? 'reversed' : 'upright'}`;
   detailMeaning.textContent = r.reversed ? meaning.reversed : meaning.upright;
+  detailKeywords.textContent = meaning.keywords || '无';
+  detailCommon.textContent = meaning.common || '无';
+
+  overlay.classList.add('show');
 
   // 高亮当前选中的牌
   document.querySelectorAll('.spread-item').forEach((el, idx) => {
     el.classList.toggle('active-detail', idx === i);
   });
+}
+
+function closeCardDetail() {
+  document.getElementById('cardDetailModalOverlay').classList.remove('show');
 }
 
 function updateRevealUI() {
@@ -587,66 +756,98 @@ function toggleReasoning(el) {
 
 async function doOverallReading() {
   if (!state.aiEnabled) { showToast('请先在设置中配置 AI'); return; }
+  if (!state.divinerStyles || state.divinerStyles.length === 0) {
+    showToast('请至少选择一个人设');
+    return;
+  }
+
   const area = document.getElementById('overallReading');
   area.style.display = 'block';
-  area.innerHTML = `<h3>🔮 AI 解读</h3>
-    <div class="reasoning-block" id="reasoningBlock" style="display:none;">
-      <div class="reasoning-header" onclick="toggleReasoning(this)">
-        <span>🤔 思考过程</span>
-        <span class="toggle-icon">▼</span>
+  area.innerHTML = `<h3>🔮 AI 解读</h3><div id="readingsContainer"></div>`;
+  const container = document.getElementById('readingsContainer');
+
+  state.readings = [];
+  
+  let cardIds = state.revealed.map((r, i) => {
+    const m = CARD_MEANINGS[r.id];
+    const orient = r.reversed ? '逆位' : '正位';
+    const detail = r.reversed ? m.reversed : m.upright;
+    return `[${r.position}] ${m.cn}（${m.en}）- ${orient}
+关键词：${m.keywords}
+提示：${detail}
+通用背景：${m.common}`;
+  }).join('\n\n');
+
+  const userPrompt = TAROT_PROMPTS.OVERALL_READING(state.question, state.spread.name, state.spread.positions.length, cardIds);
+
+  const tasks = state.divinerStyles.map(async (styleId) => {
+    const persona = state.personas[styleId] || state.personas['normal'] || { name: '未知', prompt: '' };
+    
+    // 创建 UI
+    const itemEl = document.createElement('div');
+    itemEl.className = 'reading-item';
+    itemEl.innerHTML = `
+      <h4>
+        <span>${escHtml(persona.name)} 的解读</span>
+        <span class="persona-tag">${escHtml(styleId)}</span>
+      </h4>
+      <div class="reasoning-block" style="display:none;">
+        <div class="reasoning-header" onclick="toggleReasoning(this)">
+          <span>🤔 思考过程</span>
+          <span class="toggle-icon">▼</span>
+        </div>
+        <div class="reasoning-content"></div>
       </div>
-      <div class="reasoning-content" id="reasoningContent"></div>
-    </div>
-    <div class="content" id="readingContent"><span class="loading"></span> 连结中...</div>`;
+      <div class="content"><span class="loading"></span> 连结中...</div>
+    `;
+    container.appendChild(itemEl);
 
-  const readingContent = document.getElementById('readingContent');
-  const reasoningBlock = document.getElementById('reasoningBlock');
-  const reasoningContent = document.getElementById('reasoningContent');
+    const readingContent = itemEl.querySelector('.content');
+    const reasoningBlock = itemEl.querySelector('.reasoning-block');
+    const reasoningContent = itemEl.querySelector('.reasoning-content');
 
-  let fullContent = '';
-  let fullReasoning = '';
+    let fullContent = '';
+    let fullReasoning = '';
+    
+    const resultObj = {
+      personaId: styleId,
+      personaName: persona.name,
+      content: '',
+      reasoning: ''
+    };
+    state.readings.push(resultObj);
 
-  try {
-    let cardsInfo = state.revealed.map((r, i) => {
-      const m = CARD_MEANINGS[r.id];
-      const orient = r.reversed ? '逆位' : '正位';
-      return `[${r.position}] ${m.cn}（${m.en}）- ${orient}`;
-    }).join('\n');
-
-    const prompt = TAROT_PROMPTS.OVERALL_READING(state.question, state.spread.name, state.spread.positions.length, cardsInfo);
-
-    // 获取人设提示词：优先使用有效的自定义，否则回退到预设及其默认值
-    const systemPrompt = (state.divinerStyle === 'custom' && state.customPersona)
-      ? state.customPersona
-      : (DIVINER_PERSONAS[state.divinerStyle] || DIVINER_PERSONAS['normal']).prompt;
-
-    await TarotAPI.streamChat(
-      state.apiBaseUrl, state.apiKey, state.apiModel,
-      systemPrompt,
-      prompt, state.apiMaxTokens,
-      (chunk) => {
-        if (chunk.reasoning) {
-          if (fullReasoning === '') reasoningBlock.style.display = 'block';
-          fullReasoning += chunk.reasoning;
-          reasoningContent.textContent = fullReasoning;
+    try {
+      await TarotAPI.streamChat(
+        state.apiBaseUrl, state.apiKey, state.apiModel,
+        persona.prompt,
+        userPrompt, state.apiMaxTokens,
+        (chunk) => {
+          if (chunk.reasoning) {
+            if (fullReasoning === '') reasoningBlock.style.display = 'block';
+            fullReasoning += chunk.reasoning;
+            reasoningContent.textContent = fullReasoning;
+            resultObj.reasoning = fullReasoning;
+          }
+          if (chunk.content) {
+            if (fullContent === '') readingContent.innerHTML = '';
+            fullContent += chunk.content;
+            readingContent.innerHTML = MarkdownParser.parse(fullContent);
+            resultObj.content = fullContent;
+          }
         }
-        if (chunk.content) {
-          if (fullContent === '') readingContent.innerHTML = '';
-          fullContent += chunk.content;
-          readingContent.innerHTML = MarkdownParser.parse(fullContent);
-        }
-      }
-    );
-    state.overallAI = fullContent;
-    state.overallReasoning = fullReasoning;
-    saveToHistory(); // AI 解读完成后再自动保存一次以包含解读内容
-  } catch (e) {
-    readingContent.innerHTML = `<div class="error-panel">
-      <div class="error-header">❌ 调用 API 出错</div>
-      <div style="margin: 8px 0; max-height: 200px; overflow-y: auto;">${escHtml(e.message)}</div>
-      <button class="btn-copy-error" onclick="copyToClipboard(this.previousElementSibling.textContent)">复制完整错误信息</button>
-    </div>`;
-  }
+      );
+    } catch (e) {
+      readingContent.innerHTML = `<div class="error-panel">
+        <div class="error-header">❌ 调用 API 出错 (${escHtml(persona.name)})</div>
+        <div style="margin: 8px 0; max-height: 200px; overflow-y: auto;">${escHtml(e.message)}</div>
+      </div>`;
+      resultObj.content = `Error: ${e.message}`;
+    }
+  });
+
+  await Promise.all(tasks);
+  saveToHistory(); // 全部完成后保存
 }
 
 // ---- Reset ----
