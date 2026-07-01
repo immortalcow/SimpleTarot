@@ -21,7 +21,5 @@ const MarkdownParser = {
     // 处理换行（不在标签内的换行）
     html = html.replace(/\n(?!$)/g, '<br>');
     return html;
-
-    return html;
   }
 };

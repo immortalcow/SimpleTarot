@@ -351,13 +351,6 @@ body::before {
   justify-content: space-between;
   align-items: center;
 }
-.reading-item .persona-tag {
-  font-size: 0.7em;
-  background: var(--accent);
-  padding: 2px 8px;
-  border-radius: 10px;
-  color: var(--gold-dark);
-}
 
 .btn-save { background: linear-gradient(135deg, var(--gold-dark), var(--gold-darker)); color: #0d0620; border: none; padding: 8px 20px; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 0.9em; transition: all 0.3s; }
 .btn-save:hover { filter: brightness(1.15); }
@@ -619,16 +612,6 @@ body::before {
   font-size: 0.9em;
 }
 .error-header { color: #f88; font-weight: bold; margin-bottom: 8px; border-bottom: 1px solid #f88; padding-bottom: 4px; }
-.btn-copy-error {
-  background: #422;
-  border: 1px solid #f88;
-  color: #fdd;
-  padding: 4px 10px;
-  border-radius: 4px;
-  font-size: 0.8em;
-  cursor: pointer;
-  margin-top: 10px;
-}
 
 /* Buttons */
 .btn-primary { background: linear-gradient(135deg, var(--gold-dark), var(--gold-darker)); color: #0d0620; border: none; padding: 12px 32px; border-radius: 24px; cursor: pointer; font-size: 1em; font-weight: bold; transition: all 0.3s; display: inline-block; }
@@ -641,8 +624,16 @@ body::before {
 .mt-8 { margin-top: 8px; }
 
 /* Loading */
-.loading { display: inline-block; width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--gold-dark); border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; margin-right: 6px; }
-@keyframes spin { to{transform:rotate(360deg)} }
+.loading {
+  display: inline-block;
+  width: 14px; height: 14px;
+  border: 2px solid var(--gold);
+  border-radius: 50%;
+  border-top-color: transparent;
+  animation: spin 1s linear infinite;
+  margin-right: 8px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
 
 /* Toast */
 .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--gold-dark); color: #0d0620; padding: 10px 24px; border-radius: 24px; font-weight: bold; z-index: 1000; animation: fadeInOut 2.5s forwards; }
@@ -651,8 +642,6 @@ body::before {
 /* Responsive */
 @media (max-width: 600px) {
   .header h1 { font-size: 1.6em; }
-  .reveal-card { flex-direction: column; align-items: center; text-align: center; }
-  .reveal-card img { width: 100px; }
   .card-select-grid { grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)); gap: 6px; }
   .card-slot { width: 100%; }
   .spread-grid { grid-template-columns: 1fr; }
@@ -676,15 +665,6 @@ body::before {
   border-bottom: 1px solid var(--border);
   padding-bottom: 10px;
   color: var(--gold);
-}
-.persona-tag {
-  font-size: 0.75em;
-  background: var(--gold-dark);
-  color: #000;
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-weight: bold;
-  opacity: 0.8;
 }
 .reasoning-block {
   margin-bottom: 16px;
@@ -711,16 +691,6 @@ body::before {
 .content {
   line-height: 1.8;
 }
-.loading {
-  display: inline-block;
-  width: 12px; height: 12px;
-  border: 2px solid var(--gold);
-  border-radius: 50%;
-  border-top-color: transparent;
-  animation: spin 1s linear infinite;
-  margin-right: 8px;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
 
 /* AI Actions Container */
 .ai-actions {

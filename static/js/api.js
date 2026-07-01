@@ -3,7 +3,7 @@
 // --- 提示词模板 ---
 const TAROT_PROMPTS = {
   // 牌阵整体综合解读
-  OVERALL_READING: (question, spreadName, count, cardsInfo) => 
+  OVERALL_READING: (question, spreadName, count, cardsInfo) =>
     `请对当前的塔罗牌阵进行深度综合解读。\n问题：「${question}」\n牌型：${spreadName}（${count}张）\n\n牌面详情：\n${cardsInfo}\n\n请分析各张牌之间的内在联系，揭示问题的核心本质，并从全局视角给出最终的启示与建议。控制在600字以内。`
 };
 
@@ -16,7 +16,7 @@ const TarotAPI = {
     });
     if (!resp.ok) {
       const err = await resp.text();
-      throw new Error(`获取模型列表失败 (${resp.status}): ${err.substring(0,150)}`);
+      throw new Error(`获取模型列表失败 (${resp.status}): ${err.substring(0, 150)}`);
     }
     const data = await resp.json();
     // 返回模型ID列表，过滤掉非聊天模型
@@ -30,6 +30,14 @@ const TarotAPI = {
   // 调用聊天补全 (流式)
   async streamChat(baseUrl, apiKey, model, systemPrompt, userPrompt, maxTokens, onChunk) {
     const url = baseUrl.replace(/\/+$/, '') + '/chat/completions';
+
+    // 构建合法的消息数组：只有在 systemPrompt 存在时才添加
+    const messages = [];
+    if (systemPrompt && typeof systemPrompt === 'string' && systemPrompt.trim()) {
+      messages.push({ role: 'system', content: systemPrompt });
+    }
+    messages.push({ role: 'user', content: userPrompt });
+
     const resp = await fetch(url, {
       method: 'POST',
       headers: {
@@ -38,10 +46,7 @@ const TarotAPI = {
       },
       body: JSON.stringify({
         model: model,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt }
-        ],
+        messages: messages,
         max_tokens: parseInt(maxTokens) || 4096,
         temperature: 0.8,
         stream: true
@@ -54,7 +59,7 @@ const TarotAPI = {
       try {
         const json = JSON.parse(err);
         detail = JSON.stringify(json, null, 2);
-      } catch(e) {}
+      } catch (e) { }
       throw new Error(detail);
     }
 
@@ -65,7 +70,7 @@ const TarotAPI = {
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
-      
+
       buffer += decoder.decode(value, { stream: true });
       const lines = buffer.split('\n');
       buffer = lines.pop(); // 保留最后一行（可能不完整）
@@ -80,7 +85,7 @@ const TarotAPI = {
             if (delta.content || delta.reasoning_content) {
               onChunk({
                 content: delta.content || '',
-                reasoning: delta.reasoning_content || ''
+                reasoning: delta.reasoning_content || delta.reasoning || ''
               });
             }
           } catch (e) {
