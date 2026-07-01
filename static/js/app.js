@@ -745,9 +745,12 @@ function closeCardDetail() {
 
 function updateRevealUI() {
   const allFlipped = state.flippedCount >= state.revealed.length;
-  document.getElementById('aiReadingActions').style.display = (allFlipped && state.aiEnabled) ? 'flex' : 'none';
+  const actionsArea = document.getElementById('aiReadingActions');
+  if (actionsArea) {
+    actionsArea.style.display = (allFlipped && state.aiEnabled) ? 'flex' : 'none';
+  }
 
-  if (allFlipped && state.overallAI) {
+  if (allFlipped && (state.readings && state.readings.length > 0)) {
     document.getElementById('overallReading').style.display = 'block';
   }
 }
