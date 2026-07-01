@@ -267,19 +267,22 @@ function toggleStyleSelect(event, id) {
 function onStyleCheckChange() {
   const selected = [];
   Object.keys(state.personas).forEach(id => {
-    if (document.getElementById(`check_${id}`).checked) {
+    const cb = document.getElementById(`check_${id}`);
+    if (cb && cb.checked) {
       selected.push(id);
     }
   });
-  updateSelectedStylesText(selected.length);
+  updateSelectedStylesText(selected);
   checkSettingsChanged();
 }
 
-function updateSelectedStylesText(count) {
-  if (count === undefined) {
-    count = state.divinerStyles.filter(id => state.personas[id]).length;
+function updateSelectedStylesText(selectedIds) {
+  if (selectedIds === undefined) {
+    selectedIds = state.divinerStyles.filter(id => state.personas[id]);
   }
-  document.getElementById('selectedStylesText').textContent = `选择占卜师 (${count})`;
+  const names = selectedIds.map(id => state.personas[id] ? state.personas[id].name : id);
+  const display = names.length > 0 ? names.join(', ') : '选择占卜师 (0)';
+  document.getElementById('selectedStylesText').textContent = display;
 }
 
 // 点击外部关闭下拉
